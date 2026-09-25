@@ -141,8 +141,10 @@ class LimeSurveyClient:
             return base64.b64decode(result)
         return None
 
-    def import_survey(self, lss_base64: str, survey_name: str | None = None) -> int:
-        params: list[Any] = [lss_base64, "lss"]
+    def import_survey(self, data_base64: str, import_type: str = "lss", survey_name: str | None = None) -> int:
+        """`import_type` ist eine der von LimeSurvey akzeptierten Erweiterungen:
+        'lss' (XML), 'txt' (TSV, siehe app.services.survey_export), 'csv' oder 'lsa'."""
+        params: list[Any] = [data_base64, import_type]
         if survey_name:
             params.append(survey_name)
         result = self.call("import_survey", *params)

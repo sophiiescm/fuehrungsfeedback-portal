@@ -77,17 +77,17 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz:** Seed-CSV wird importiert, der Diff ist korrekt, kleine Teams sind markiert, die Tests für den Import sind grün. Verifiziert: voller 1.900-Personen-Seed per `POST /organisation/import/apply` gegen den containerisierten Stack importiert (< 1s), 41 Org-Einheiten korrekt dedupliziert, 566 Teams erkannt (48 davon < 3 Personen, 8,5% — nah an der "ca. 5%"-Vorgabe), 569 Führungskraft-Rollen automatisch abgeleitet, Organigramm mit Team-zu-klein-Markierung im UI bestätigt. 34/34 Backend-Tests grün (inkl. 6 Import- und 4 Rollen-Tests), 8/8 Seed-Skript-Tests grün.
 
 ## Phase 3 – Umfrage gestalten
-- [ ] Editor:
+- [x] Editor:
   - Abschnitte bzw. Dimensionen
   - Likert-Fragen (Skalenbreite, Polbeschriftungen, Pflicht ja/nein)
   - Freitextfragen
   - Reihenfolge per Drag & Drop
   - Vorschau
-- [ ] Versionierung. Eine Version ist nach Nutzung in einer Runde gesperrt, „Als neue Version bearbeiten“ ist möglich.
-- [ ] Übertragung nach LimeSurvey über den in Phase 0 gewählten Weg. Pflicht-Einstellungen setzen (anonymized, kein Datestamp, keine IP, printanswers, kein Bearbeiten nach Abschluss).
-- [ ] Mitgelieferte Beispiel-Umfrage „Führungsfeedback Standard“: ca. 20 Likert-Fragen in 5 Dimensionen und 3 Freitextfragen
+- [x] Versionierung. Eine Version ist nach Nutzung in einer Runde gesperrt, „Als neue Version bearbeiten“ ist möglich.
+- [x] Übertragung nach LimeSurvey über den in Phase 0 gewählten Weg. Pflicht-Einstellungen setzen (anonymized, kein Datestamp, keine IP, printanswers, kein Bearbeiten nach Abschluss).
+- [x] Mitgelieferte Beispiel-Umfrage „Führungsfeedback Standard“: ca. 20 Likert-Fragen in 5 Dimensionen und 3 Freitextfragen (`seed/seed_survey_template.py`)
 
-**Akzeptanz:** Eine Umfrage wird im Portal erstellt, in LimeSurvey angelegt und ist dort aufrufbar.
+**Akzeptanz:** Eine Umfrage wird im Portal erstellt, in LimeSurvey angelegt und ist dort aufrufbar. Verifiziert: "Führungsfeedback Standard" (5 Dimensionen, 23 Fragen) live nach LimeSurvey übertragen (`sid` gespeichert), dort mit korrekten Gruppen, Fragetypen (`L`/`T`) und Pflicht-Einstellungen (`anonymized=Y`, `datestamp=N`, `ipaddr=N`, `printanswers=Y`, `tokenanswerspersistence=Y`) bestätigt. Editor, Drag-&-Drop-Umsortierung, Vorschau und Versionssperre im Browser gegen den containerisierten Stack getestet. 47/47 Backend-Tests grün.
 
 ## Phase 4 – Befragungsrunden, Teilnahme, Benachrichtigungen
 - [ ] Runde anlegen mit:
