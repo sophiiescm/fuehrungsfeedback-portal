@@ -58,23 +58,23 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz:** Login als Admin, FK und MA möglich (per Browser gegen den vollständig containerisierten Stack verifiziert, inkl. Neustart mit frischen Volumes). Jede Rolle sieht die richtige Sidebar (Admin: 8 Menüpunkte, FK: 4, MA: 3 — exakt wie in der CLAUDE.md-Tabelle). Die Tests sind grün (13/13 Backend-Tests, `svelte-check` 0 Fehler).
 
 ## Phase 2 – Organisation, Benutzer, SAP-Import
-- [ ] `OrgSource`-Interface, `CsvOrgSource`, `ODataOrgSource`-Stub
-- [ ] Import:
+- [x] `OrgSource`-Interface, `CsvOrgSource`, `ODataOrgSource`-Stub
+- [x] Import:
   - Trockenlauf mit Diff
   - Übernahme
   - Plausibilitätsprüfungen (Zyklen, fehlende Vorgesetzte, Dubletten)
   - Protokoll
-  - nächtlicher Job (konfigurierbar)
-- [ ] Rollen automatisch ableiten (FK = hat Unterstellte). Admin-Rolle manuell.
-- [ ] Benutzerverwaltung:
+  - nächtlicher Job (konfigurierbar über `setting`-Tabelle + Admin-Endpunkt, APScheduler)
+- [x] Rollen automatisch ableiten (FK = hat Unterstellte). Admin-Rolle manuell.
+- [x] Benutzerverwaltung:
   - Suche und Filter (Fachbereich, Rolle, mit/ohne E-Mail)
   - Detailansicht mit Org-Pfad
   - Rollen vergeben
   - Person deaktivieren
-- [ ] Organigramm-Ansicht (einfacher Baum), Teams < 3 markieren
-- [ ] Seed-Skript mit 1.900 Personen laut `CLAUDE.md`
+- [x] Organigramm-Ansicht (einfacher Baum), Teams < 3 markieren
+- [x] Seed-Skript mit 1.900 Personen laut `CLAUDE.md` (`seed/generate_org_csv.py`)
 
-**Akzeptanz:** Seed-CSV wird importiert, der Diff ist korrekt, kleine Teams sind markiert, die Tests für den Import sind grün.
+**Akzeptanz:** Seed-CSV wird importiert, der Diff ist korrekt, kleine Teams sind markiert, die Tests für den Import sind grün. Verifiziert: voller 1.900-Personen-Seed per `POST /organisation/import/apply` gegen den containerisierten Stack importiert (< 1s), 41 Org-Einheiten korrekt dedupliziert, 566 Teams erkannt (48 davon < 3 Personen, 8,5% — nah an der "ca. 5%"-Vorgabe), 569 Führungskraft-Rollen automatisch abgeleitet, Organigramm mit Team-zu-klein-Markierung im UI bestätigt. 34/34 Backend-Tests grün (inkl. 6 Import- und 4 Rollen-Tests), 8/8 Seed-Skript-Tests grün.
 
 ## Phase 3 – Umfrage gestalten
 - [ ] Editor:
