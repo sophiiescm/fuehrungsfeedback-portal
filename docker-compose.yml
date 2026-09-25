@@ -79,6 +79,53 @@ services:
     entrypoint: ["sh", "/limesurvey-init.sh"]
     restart: "no"
 
+  portal-api:
+    build: ./portal-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-portal}:${POSTGRES_PASSWORD:-portal_dev_password}@postgres:5432/${POSTGRES_DB:-portal}
+      SECRET_KEY: ${SECRET_KEY:-change_me_dev_secret_key_please_rotate}
+      FEEDBACKBRIDGE_HMAC_SECRET: ${FEEDBACKBRIDGE_HMAC_SECRET:-change_me_dev_hmac_secret}
+      LIMESURVEY_RC_API_URL: http://limesurvey:8080/index.php/admin/remotecontrol
+      LIMESURVEY_RC_USER: ${LIMESURVEY_ADMIN_USER:-admin}
+      LIMESURVEY_RC_PASSWORD: ${LIMESURVEY_ADMIN_PASSWORD:-admin_dev_password}
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://localhost:5173/auth/callback}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: ${SMTP_FROM:-feedback-portal@example.test}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+    ports:
+      - "${PORTAL_API_PORT:-8001}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  portal-web:
+    build:
+      context: ./portal-web
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8001}
+    restart: unless-stopped
+    depends_on:
+      - portal-api
+    environment:
+      PORT: 3000
+    ports:
+      - "${PORTAL_WEB_PORT:-5173}:3000"
+
   mailpit:
     image: axllent/mailpit:latest
     restart: unless-stopped

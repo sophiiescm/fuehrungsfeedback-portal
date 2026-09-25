@@ -23,8 +23,8 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz:** LimeSurvey läuft lokal (`docker compose up`, RemoteControl-Aktivierung automatisiert über `limesurvey-init`), die Machbarkeitsprüfung ist dokumentiert, der Architekturweg steht fest.
 
 ## Phase 1 – Portal-Grundgerüst und Glassmorphism-Layout
-- [ ] FastAPI-Projekt mit Postgres, SQLAlchemy 2 und Alembic, Health-Endpunkt, Konfiguration über pydantic-settings
-- [ ] Datenmodell (erste Migration):
+- [x] FastAPI-Projekt mit Postgres, SQLAlchemy 2 und Alembic, Health-Endpunkt, Konfiguration über pydantic-settings
+- [x] Datenmodell (erste Migration):
   - `person`
   - `org_unit` / `fachbereich`
   - `role_assignment`
@@ -42,20 +42,20 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
   - `setting`
   - `import_log`
   - `audit_log`
-- [ ] Auth-Grundgerüst:
+- [x] Auth-Grundgerüst:
   - Session/JWT
   - Dev-Login
   - Rollenprüfung als Dependency
   - OIDC-Modul (Authlib, per ENV aktivierbar)
   - SAML-Stub
-- [ ] SvelteKit-App mit Tailwind:
+- [x] SvelteKit-App mit Tailwind:
   - Glassmorphism-Designsystem (Tokens, Karten, Buttons, Tabellen, Formulare)
   - Sidebar nach Rollen
   - Hell- und Dunkelmodus
   - Login-Seite (SSO-Button, Personalnummer + Code, Dev-Login)
-- [ ] LimeSurvey-Client im Backend (JSON-RPC-Wrapper mit Session-Handling, Retry, Tests gegen Mock)
+- [x] LimeSurvey-Client im Backend (JSON-RPC-Wrapper mit Session-Handling, Retry, Tests gegen Mock)
 
-**Akzeptanz:** Login als Admin, FK und MA möglich. Jede Rolle sieht die richtige Sidebar. Die Tests sind grün.
+**Akzeptanz:** Login als Admin, FK und MA möglich (per Browser gegen den vollständig containerisierten Stack verifiziert, inkl. Neustart mit frischen Volumes). Jede Rolle sieht die richtige Sidebar (Admin: 8 Menüpunkte, FK: 4, MA: 3 — exakt wie in der CLAUDE.md-Tabelle). Die Tests sind grün (13/13 Backend-Tests, `svelte-check` 0 Fehler).
 
 ## Phase 2 – Organisation, Benutzer, SAP-Import
 - [ ] `OrgSource`-Interface, `CsvOrgSource`, `ODataOrgSource`-Stub

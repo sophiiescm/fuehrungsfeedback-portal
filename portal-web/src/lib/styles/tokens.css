@@ -1,0 +1,108 @@
+/* Glassmorphism-Designsystem (CLAUDE.md: "Layout: feste Sidebar links, Inhalt
+   rechts. Halbtransparente Karten (backdrop-filter: blur), weicher
+   Farbverlauf im Hintergrund. Barrierefreiheit: Kontrast nach WCAG AA trotz
+   Glas-Effekt. Hell- und Dunkelmodus.")
+
+   Kontrast-Strategie: Text liegt nie direkt auf dem verschwommenen
+   Hintergrund, sondern auf --surface-glass, das selbst bei Transparenz genug
+   Deckkraft behaelt (>= 0.72) um AA-Kontrast fuer --text-primary zu
+   gewaehrleisten. */
+
+:root {
+	--bg-gradient-start: #eef2ff;
+	--bg-gradient-end: #e0f2fe;
+
+	--surface-glass: rgba(255, 255, 255, 0.72);
+	--surface-glass-strong: rgba(255, 255, 255, 0.88);
+	--surface-glass-border: rgba(255, 255, 255, 0.5);
+	--surface-blur: 16px;
+
+	--text-primary: #1e2333;
+	--text-secondary: #4b5266;
+	--text-muted: #6b7280;
+
+	--accent: #4f46e5;
+	--accent-hover: #4338ca;
+	--accent-contrast: #ffffff;
+
+	--success: #15803d;
+	--warning: #b45309;
+	--danger: #b91c1c;
+
+	--border-subtle: rgba(30, 35, 51, 0.08);
+	--shadow-glass: 0 8px 32px rgba(31, 41, 55, 0.12);
+
+	--radius-sm: 8px;
+	--radius-md: 14px;
+	--radius-lg: 22px;
+
+	--sidebar-width: 264px;
+
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--bg-gradient-start: #0f1222;
+		--bg-gradient-end: #1a1f3a;
+
+		--surface-glass: rgba(30, 34, 54, 0.72);
+		--surface-glass-strong: rgba(30, 34, 54, 0.9);
+		--surface-glass-border: rgba(255, 255, 255, 0.08);
+
+		--text-primary: #f1f3fb;
+		--text-secondary: #c7cbdc;
+		--text-muted: #9195ab;
+
+		--accent: #818cf8;
+		--accent-hover: #a5b4fc;
+		--accent-contrast: #0f1222;
+
+		--border-subtle: rgba(255, 255, 255, 0.08);
+		--shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+		color-scheme: dark;
+	}
+}
+
+:root[data-theme='dark'] {
+	--bg-gradient-start: #0f1222;
+	--bg-gradient-end: #1a1f3a;
+
+	--surface-glass: rgba(30, 34, 54, 0.72);
+	--surface-glass-strong: rgba(30, 34, 54, 0.9);
+	--surface-glass-border: rgba(255, 255, 255, 0.08);
+
+	--text-primary: #f1f3fb;
+	--text-secondary: #c7cbdc;
+	--text-muted: #9195ab;
+
+	--accent: #818cf8;
+	--accent-hover: #a5b4fc;
+	--accent-contrast: #0f1222;
+
+	--border-subtle: rgba(255, 255, 255, 0.08);
+	--shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+	color-scheme: dark;
+}
+
+body {
+	background: radial-gradient(
+		circle at top left,
+		var(--bg-gradient-start),
+		var(--bg-gradient-end) 70%
+	);
+	background-attachment: fixed;
+	color: var(--text-primary);
+	min-height: 100vh;
+}
+
+.glass-surface {
+	background: var(--surface-glass);
+	border: 1px solid var(--surface-glass-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-glass);
+	backdrop-filter: blur(var(--surface-blur));
+	-webkit-backdrop-filter: blur(var(--surface-blur));
+}
