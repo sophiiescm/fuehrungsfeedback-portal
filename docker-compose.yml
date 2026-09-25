@@ -1,0 +1,95 @@
+name: fuehrungsfeedback
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-portal}
+      POSTGRES_USER: ${POSTGRES_USER:-portal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portal_dev_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-portal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mariadb:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-limesurvey}
+      MARIADB_USER: ${MARIADB_USER:-limesurvey}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-limesurvey_dev_password}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-limesurvey_root_dev_password}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  limesurvey:
+    image: martialblog/limesurvey:6.17.18-260831-apache
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_NAME: ${MARIADB_DATABASE:-limesurvey}
+      DB_USERNAME: ${MARIADB_USER:-limesurvey}
+      DB_PASSWORD: ${MARIADB_PASSWORD:-limesurvey_dev_password}
+      DB_TABLE_PREFIX: lime_
+      ADMIN_USER: ${LIMESURVEY_ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${LIMESURVEY_ADMIN_PASSWORD:-admin_dev_password}
+      ADMIN_NAME: ${LIMESURVEY_ADMIN_NAME:-Portal Admin}
+      ADMIN_EMAIL: ${LIMESURVEY_ADMIN_EMAIL:-admin@example.test}
+      PUBLIC_URL: ${LIMESURVEY_URL:-http://localhost:8080}
+      URL_FORMAT: path
+      LISTEN_PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - limesurvey_upload:/var/www/html/upload
+      - ./limesurvey-plugin:/var/www/html/upload/plugins/FeedbackBridge
+      - ./limesurvey-theme:/var/www/html/upload/themes/survey/feedbackportal
+
+  limesurvey-init:
+    image: mariadb:10.11
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      limesurvey:
+        condition: service_started
+    environment:
+      DB_HOST: mariadb
+      DB_NAME: ${MARIADB_DATABASE:-limesurvey}
+      DB_USER: ${MARIADB_USER:-limesurvey}
+      DB_PASSWORD: ${MARIADB_PASSWORD:-limesurvey_dev_password}
+    volumes:
+      - ./scripts/limesurvey-init.sh:/limesurvey-init.sh:ro
+    entrypoint: ["sh", "/limesurvey-init.sh"]
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Web-UI
+      - "1025:1025" # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  postgres_data:
+  mariadb_data:
+  limesurvey_upload:

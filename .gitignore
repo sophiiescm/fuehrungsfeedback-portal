@@ -1,0 +1,33 @@
+# Secrets / lokale Konfiguration
+.env
+*.local
+
+# Python / FastAPI
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / SvelteKit
+node_modules/
+.svelte-kit/
+build/
+dist/
+.env.*.local
+
+# Docker / Daten
+*.sqlite3
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generierte Reports/PDFs (nur fiktive Testdaten sollen versioniert sein, keine generierten Artefakte)
+/seed/output/
+*.pdf
