@@ -24,6 +24,12 @@ class QuestionOut(BaseModel):
     pole_label_max: str | None
     mandatory: bool
     sort_order: int
+    help_text: str | None = None
+    options: list[str] | None = None
+    allow_multiple: bool = False
+    show_if_question_id: int | None = None
+    show_if_operator: str | None = None
+    show_if_value: str | None = None
 
 
 class QuestionIn(BaseModel):
@@ -35,6 +41,12 @@ class QuestionIn(BaseModel):
     pole_label_min: str | None = None
     pole_label_max: str | None = None
     mandatory: bool = True
+    help_text: str | None = None
+    options: list[str] | None = None
+    allow_multiple: bool = False
+    show_if_question_id: int | None = None
+    show_if_operator: str | None = None
+    show_if_value: str | None = None
 
 
 class QuestionUpdateIn(BaseModel):
@@ -45,6 +57,12 @@ class QuestionUpdateIn(BaseModel):
     pole_label_min: str | None = None
     pole_label_max: str | None = None
     mandatory: bool | None = None
+    help_text: str | None = None
+    options: list[str] | None = None
+    allow_multiple: bool | None = None
+    show_if_question_id: int | None = None
+    show_if_operator: str | None = None
+    show_if_value: str | None = None
 
 
 class ReorderItem(BaseModel):

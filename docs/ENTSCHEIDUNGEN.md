@@ -44,3 +44,9 @@
 | 30 | Umsetzungsreihenfolge nach Demo-Review: (1) Reports/Benchmark/NPS, (2) Umfrage-Editor mit neuen Fragetypen und Verzweigungen, (3) Runden-Automatisierung, (4) Entra-ID-SSO, Trusted-App-SSO, SuccessFactors-OData, Freitext-Kategorien, Outlook-Versand | Vorgabe der Fachseite (Word-Notizen); Rückfragen wurden als Annahmen in `OPEN_QUESTIONS.md` festgehalten statt nachzufragen. |
 
 (Claude Code ergänzt weitere Entscheidungen fortlaufend.)
+
+## Nr. 31 – Fragetypen, Verzweigungen, NPS, Vergleichsgruppen (Fachseiten-Feedback)
+- Neue Fragetypen `nps` (0–10) und `choice` (Einfach-/Mehrfachauswahl, Checkbox „Mehrfachantworten"), mehrere Freitextfelder erlaubt; Hilfetext pro Frage.
+- Verzweigung pro Frage (`show_if_*`): nur auf frühere Skala-/NPS-/Einfachauswahl-Fragen, wird als LimeSurvey-Relevance-Ausdruck exportiert; ungültige/rückwärtige Bedingung => immer sichtbar.
+- Auswertung: NPS aus Verteilung; Ampel gegenüber Unternehmensmittel (±0,2); frei wählbare Vergleichsgruppen (Fachbereiche), Unterdrückung < 3 FK bleibt.
+- Freitext: Wortwolke (Wort nur wenn ≥ 3 verschiedene Antworten), Kategorien per Keywords (Kategorie nur ab ≥ 3 Texten, sonst „Sonstiges"). PDF-Report enthält NPS, Auswahlfragen, Wortwolke, Themen.

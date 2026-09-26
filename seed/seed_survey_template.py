@@ -54,6 +54,8 @@ DIMENSIONS: dict[str, list[str]] = {
     ],
 }
 
+THEMEN = ["Kommunikation", "Wertschätzung", "Weiterentwicklung", "Arbeitsbelastung", "Zusammenarbeit"]
+
 FREITEXT_FRAGEN = [
     "Was schätzen Sie besonders an der Zusammenarbeit mit Ihrer Führungskraft?",
     "Wo sehen Sie Verbesserungspotential?",
@@ -100,6 +102,22 @@ def seed() -> SurveyTemplate:
                 )
                 question_order += 1
 
+        # NPS, Verzweigung (Nachfrage nur bei Detractors), Auswahlfrage mit Mehrfachantwort
+        nps = Question(survey_version_id=version.id, dimension_id=None, type=QuestionType.nps, mandatory=True,
+                       text="Wie wahrscheinlich ist es, dass Sie Ihre Führungskraft weiterempfehlen?",
+                       pole_label_min="Sehr unwahrscheinlich", pole_label_max="Sehr wahrscheinlich", sort_order=question_order)
+        db.add(nps)
+        db.flush()
+        question_order += 1
+        db.add(Question(survey_version_id=version.id, dimension_id=None, type=QuestionType.freitext, mandatory=False,
+                        text="Was sollte sich aus Ihrer Sicht ändern?", show_if_question_id=nps.id,
+                        show_if_operator="lt", show_if_value="7", sort_order=question_order))
+        question_order += 1
+        db.add(Question(survey_version_id=version.id, dimension_id=None, type=QuestionType.choice, mandatory=False,
+                        allow_multiple=True, text="Welche Themen sind Ihnen im Team besonders wichtig?",
+                        options=THEMEN, sort_order=question_order))
+        question_order += 1
+
         for text in FREITEXT_FRAGEN:
             db.add(
                 Question(
@@ -118,7 +136,7 @@ def seed() -> SurveyTemplate:
         print(
             f"Vorlage '{TEMPLATE_NAME}' angelegt (id={template.id}, version={version.id}): "
             f"{len(DIMENSIONS)} Dimensionen, {total_questions} Fragen "
-            f"({total_questions - len(FREITEXT_FRAGEN)} Likert, {len(FREITEXT_FRAGEN)} Freitext)."
+            f"({total_questions - len(FREITEXT_FRAGEN) - 3} Likert, NPS, Auswahl, {len(FREITEXT_FRAGEN) + 1} Freitext)."
         )
         return template
     finally:

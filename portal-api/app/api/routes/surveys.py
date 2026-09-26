@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role
 from app.db import get_db
 from app.models.person import Role
-from app.models.survey import Dimension, Question, SurveyTemplate, SurveyVersion
+from app.models.survey import Dimension, Question, QuestionType, SurveyTemplate, SurveyVersion
 from app.schemas.survey import (
     DimensionIn,
     DimensionOut,
@@ -40,6 +40,28 @@ def _get_version_or_404(db: Session, version_id: int) -> SurveyVersion:
     return version
 
 
+QUESTION_FIELDS = ("id", "dimension_id", "type", "text", "scale_min", "scale_max", "pole_label_min",
+                   "pole_label_max", "mandatory", "sort_order", "help_text", "options", "allow_multiple",
+                   "show_if_question_id", "show_if_operator", "show_if_value")
+
+
+def _q_out(q: Question) -> QuestionOut:
+    return QuestionOut(**{f: getattr(q, f) for f in QUESTION_FIELDS})
+
+
+def _validate_question(db: Session, version: SurveyVersion, q_type, options, show_if_question_id, show_if_operator, own_id=None):
+    if q_type == QuestionType.choice and (not options or len([o for o in options if o.strip()]) < 2):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Auswahlfragen brauchen mindestens 2 Antwortoptionen")
+    if show_if_question_id is not None:
+        source = db.get(Question, show_if_question_id)
+        if source is None or source.survey_version_id != version.id or source.id == own_id:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ungültige Bezugsfrage für die Verzweigung")
+        if source.type == QuestionType.freitext or (source.type == QuestionType.choice and source.allow_multiple):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Verzweigungen sind nur auf Skalen-, NPS- und Einfachauswahl-Fragen möglich")
+        if show_if_operator not in {"eq", "neq", "lt", "lte", "gt", "gte"}:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ungültiger Vergleichsoperator")
+
+
 def _version_to_detail(version: SurveyVersion) -> SurveyVersionDetailOut:
     return SurveyVersionDetailOut(
         id=version.id,
@@ -53,12 +75,7 @@ def _version_to_detail(version: SurveyVersion) -> SurveyVersionDetailOut:
             for d in sorted(version.dimensions, key=lambda d: d.sort_order)
         ],
         questions=[
-            QuestionOut(
-                id=q.id, dimension_id=q.dimension_id, type=q.type, text=q.text,
-                scale_min=q.scale_min, scale_max=q.scale_max,
-                pole_label_min=q.pole_label_min, pole_label_max=q.pole_label_max,
-                mandatory=q.mandatory, sort_order=q.sort_order,
-            )
+            _q_out(q)
             for q in sorted(version.questions, key=lambda q: q.sort_order)
         ],
     )
@@ -155,6 +172,7 @@ def add_question(version_id: int, payload: QuestionIn, db: Session = Depends(get
     except VersionLockedError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
 
+    _validate_question(db, version, payload.type, payload.options, payload.show_if_question_id, payload.show_if_operator)
     max_order = max([q.sort_order for q in version.questions], default=0)
     question = Question(
         survey_version_id=version.id,
@@ -167,16 +185,17 @@ def add_question(version_id: int, payload: QuestionIn, db: Session = Depends(get
         pole_label_max=payload.pole_label_max,
         mandatory=payload.mandatory,
         sort_order=max_order + 1,
+        help_text=payload.help_text,
+        options=[o.strip() for o in payload.options if o.strip()] if payload.options else None,
+        allow_multiple=payload.allow_multiple,
+        show_if_question_id=payload.show_if_question_id,
+        show_if_operator=payload.show_if_operator,
+        show_if_value=payload.show_if_value,
     )
     db.add(question)
     db.commit()
     db.refresh(question)
-    return QuestionOut(
-        id=question.id, dimension_id=question.dimension_id, type=question.type, text=question.text,
-        scale_min=question.scale_min, scale_max=question.scale_max,
-        pole_label_min=question.pole_label_min, pole_label_max=question.pole_label_max,
-        mandatory=question.mandatory, sort_order=question.sort_order,
-    )
+    return _q_out(question)
 
 
 @router.patch("/questions/{question_id}", response_model=QuestionOut)
@@ -189,16 +208,17 @@ def update_question(question_id: int, payload: QuestionUpdateIn, db: Session = D
     except VersionLockedError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    _validate_question(
+        db, question.survey_version, question.type, data.get("options", question.options),
+        data.get("show_if_question_id", question.show_if_question_id),
+        data.get("show_if_operator", question.show_if_operator), own_id=question.id,
+    )
+    for field, value in data.items():
         setattr(question, field, value)
     db.commit()
     db.refresh(question)
-    return QuestionOut(
-        id=question.id, dimension_id=question.dimension_id, type=question.type, text=question.text,
-        scale_min=question.scale_min, scale_max=question.scale_max,
-        pole_label_min=question.pole_label_min, pole_label_max=question.pole_label_max,
-        mandatory=question.mandatory, sort_order=question.sort_order,
-    )
+    return _q_out(question)
 
 
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)

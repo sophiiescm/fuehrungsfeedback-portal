@@ -95,7 +95,8 @@ def test_three_responses_produce_aggregates_and_redacted_freetext(db_session, se
     rep = evaluation.evaluate_target(db_session, setup["target"], _responses(setup, 4), pattern, set())
     assert not rep.suppressed and rep.n_responses == 4
     assert db_session.query(ResultAggregate).filter(ResultAggregate.dimension_id.is_not(None)).count() == 1
-    assert len(rep.freetext) == 4 and all("Bea" not in t and "Chef" not in t for t in rep.freetext)
+    texts = [t for g in rep.freetext for t in g["texts"]]
+    assert len(texts) == 4 and all("Bea" not in t and "Chef" not in t for t in texts)
 
 
 def _token(client, pnr):

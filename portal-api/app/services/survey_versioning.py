@@ -55,9 +55,9 @@ def clone_as_new_version(db: Session, version: SurveyVersion) -> SurveyVersion:
         db.flush()
         dimension_id_map[dim.id] = new_dim.id
 
+    new_questions: dict[int, Question] = {}
     for q in sorted(version.questions, key=lambda q: q.sort_order):
-        db.add(
-            Question(
+        new_q = Question(
                 survey_version_id=new_version.id,
                 dimension_id=dimension_id_map.get(q.dimension_id) if q.dimension_id else None,
                 type=q.type,
@@ -68,8 +68,18 @@ def clone_as_new_version(db: Session, version: SurveyVersion) -> SurveyVersion:
                 pole_label_max=q.pole_label_max,
                 mandatory=q.mandatory,
                 sort_order=q.sort_order,
-            )
+                help_text=q.help_text,
+                options=q.options,
+                allow_multiple=q.allow_multiple,
+                show_if_operator=q.show_if_operator,
+                show_if_value=q.show_if_value,
         )
+        db.add(new_q)
+        new_questions[q.id] = new_q
+    db.flush()
+    for q in version.questions:  # Verzweigungen auf die neuen Fragen umbiegen
+        if q.show_if_question_id in new_questions:
+            new_questions[q.id].show_if_question_id = new_questions[q.show_if_question_id].id
 
     db.commit()
     db.refresh(new_version)

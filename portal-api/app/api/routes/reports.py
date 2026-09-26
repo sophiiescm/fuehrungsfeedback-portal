@@ -8,8 +8,9 @@ from app.db import get_db
 from app.models.person import Person, Role
 from app.models.result import Report, ResultAggregate
 from app.models.round import Round, RoundStatus, RoundTarget
-from app.models.survey import Dimension, Question
-from app.services import evaluation, pdf_letters
+from app.models.survey import Dimension, Question, QuestionType
+from app.models.system import Setting
+from app.services import evaluation, pdf_letters, textanalysis
 from app.services.stats import effective_threshold
 
 router = APIRouter(tags=["reports"])
@@ -24,10 +25,32 @@ td,th{border:1px solid #ccc;padding:4px;text-align:left}.bar{background:#4f46e5;
 <h2>Dimensionen</h2><table><tr><th>Dimension</th><th>Mittelwert</th><th>Median</th><th>Std.abw.</th><th>Min/Max</th><th>Fachbereich</th><th>Unternehmen</th><th>Vorrunde</th></tr>
 {% for x in d.dimensions %}<tr><td>{{ x.dimension }}</td><td>{{ x.mean }}<div class="bar" style="width:{{ x.mean * 20 }}%"></div></td><td>{{ x.median }}</td><td>{{ x.stddev }}</td><td>{{ x.min }}/{{ x.max }}</td>
 <td>{{ x.fachbereich.mean if x.fachbereich else '–' }}</td><td>{{ x.unternehmen.mean if x.unternehmen else '–' }}</td><td>{{ x.vorrunde.mean if x.vorrunde else '–' }}</td></tr>{% endfor %}</table>
-<h2>Fragen</h2><table>{% for q in d.questions %}<tr><td>{{ q.question }}</td><td>{{ q.mean }}</td><td>n={{ q.n }}</td><td>{{ q.distribution }}</td></tr>{% endfor %}</table>
+<h2>Fragen</h2><table>{% for q in d.questions %}<tr><td>{{ q.question }}</td>
+{% if q.type == 'choice' %}<td colspan="3">{% for k, v in q.distribution.items() %}{{ (q.options or [])[k|int - 1] if (q.options and k|int - 1 < q.options|length) else k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
+{% elif q.type == 'nps' %}<td>NPS {{ q.nps.score if q.nps else '–' }}</td><td>n={{ q.n }}</td><td>{{ q.distribution }}</td>
+{% else %}<td>{{ q.mean }}</td><td>n={{ q.n }}</td><td>{{ q.distribution }}</td>{% endif %}</tr>{% endfor %}</table>
+{% if d.nps and d.nps.score is not none %}<h2>Net Promoter Score</h2><p>NPS {{ d.nps.score }} ({{ d.nps.promoters }} Promoter, {{ d.nps.passives }} Passive, {{ d.nps.detractors }} Detractors)</p>{% endif %}
 {% if d.ai_summary %}<h2>Zusammenfassung der Freitexte</h2><p>{{ d.ai_summary }}</p>{% endif %}
-{% if d.freetext %}<h2>Freitexte (geschwärzt)</h2><ul>{% for t in d.freetext %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
+{% if d.wordcloud %}<h2>Häufige Begriffe</h2><p>{% for w in d.wordcloud %}<span style="font-size:{{ 9 + w.count * 2 if w.count < 8 else 25 }}pt">{{ w.word }}</span> {% endfor %}</p>{% endif %}
+{% if d.categories %}<h2>Freitexte nach Themen (geschwärzt)</h2>{% for c in d.categories %}<h3>{{ c.category }} ({{ c.count }})</h3><ul>{% for t in c.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}{% endif %}
 </body></html>"""
+
+
+def nps_from_distribution(dist: dict) -> dict:
+    """NPS = Anteil Promoter (9-10) minus Anteil Detractors (0-6), in Prozentpunkten."""
+    counts = {int(k): v for k, v in dist.items()}
+    n = sum(counts.values())
+    prom = sum(v for k, v in counts.items() if k >= 9)
+    det = sum(v for k, v in counts.items() if k <= 6)
+    return {
+        "score": round((prom - det) / n * 100, 1) if n else None, "n": n,
+        "promoters": prom, "passives": n - prom - det, "detractors": det,
+    }
+
+
+def get_nps_reference(db: Session) -> dict | None:
+    s = db.execute(select(Setting).where(Setting.key == "nps_reference")).scalar_one_or_none()
+    return s.value if s else None
 
 
 def _agg_dict(a: ResultAggregate) -> dict:
@@ -103,16 +126,28 @@ def _report_detail(db: Session, target: RoundTarget) -> dict:
             "vorrunde": {"mean": prev_agg.mean, "delta": round(own.mean - prev_agg.mean, 3)} if prev_agg else None,
         })
     questions = []
+    nps = None
     q_rows = db.execute(
         select(Question).where(Question.survey_version_id == target.round.survey_version_id).order_by(Question.sort_order)
     ).scalars()
     for q in q_rows:
         a = next((x for x in aggs if x.question_id == q.id), None)
         if a:
-            questions.append({"question": q.text, **_agg_dict(a)})
+            item = {"question": q.text, "type": q.type.value, "options": q.options, **_agg_dict(a)}
+            if q.type == QuestionType.nps:
+                nps = nps_from_distribution(a.distribution)
+                item["nps"] = nps
+            questions.append(item)
+    groups = report.freetext or []
+    if groups and isinstance(groups[0], str):  # aeltere Reports (Phase 5): flache Liste
+        groups = [{"question_id": None, "question": "Freitext", "texts": groups}]
+    all_texts = [t for g in groups for t in g["texts"]]
     return {
         **base, "available": True, "n_responses": report.n_responses, "dimensions": dims,
-        "questions": questions, "freetext": report.freetext or [], "ai_summary": report.ai_summary,
+        "questions": questions, "nps": nps, "nps_reference": get_nps_reference(db),
+        "freetext": groups, "wordcloud": textanalysis.wordcloud(all_texts),
+        "categories": textanalysis.group_by_category(all_texts, textanalysis.categorize_keywords(all_texts)),
+        "ai_summary": report.ai_summary,
     }
 
 
@@ -241,3 +276,92 @@ def benchmark(round_id: int, fachbereich: str | None = None, db: Session = Depen
                 },
             }
     return out
+
+
+TRAFFIC_LIGHT_DELTA = 0.2  # Abweichung zum Unternehmensmittel in Skalenpunkten
+
+
+def traffic_light(delta: float | None) -> str | None:
+    if delta is None:
+        return None
+    return "gruen" if delta >= TRAFFIC_LIGHT_DELTA else "rot" if delta <= -TRAFFIC_LIGHT_DELTA else "gelb"
+
+
+def _group_nps(db: Session, round_id: int, fachbereich: str | None) -> dict | None:
+    nps_q = db.execute(
+        select(Question).join(Round, Round.survey_version_id == Question.survey_version_id)
+        .where(Round.id == round_id, Question.type == QuestionType.nps)
+    ).scalars().first()
+    if nps_q is None:
+        return None
+    rows = db.execute(
+        select(ResultAggregate.distribution, RoundTarget.leader_person_id)
+        .join(RoundTarget, RoundTarget.id == ResultAggregate.round_target_id)
+        .where(RoundTarget.round_id == round_id, ResultAggregate.question_id == nps_q.id)
+    ).all()
+    if fachbereich is not None:
+        allowed = {
+            p.id for p in db.execute(select(Person)).scalars()
+            if p.org_unit and p.org_unit.fachbereich == fachbereich
+        }
+        rows = [r for r in rows if r[1] in allowed]
+    if len(rows) < effective_threshold():
+        return None
+    total: dict[str, int] = {}
+    for dist, _ in rows:
+        for k, v in dist.items():
+            total[k] = total.get(k, 0) + v
+    return {**nps_from_distribution(total), "leaders": len(rows)}
+
+
+@admin_router.get("/benchmark/compare")
+def benchmark_compare(round_id: int, groups: str, db: Session = Depends(get_db)) -> dict:
+    """Vergleich frei waehlbarer Gruppen (Fachbereiche, kommagetrennt), z. B. "Vertrieb,IT".
+    Je Gruppe und Dimension: Mittelwert, Abweichung zum Unternehmen, Ampel. Gruppen mit
+    weniger als der Schwelle an Fuehrungskraeften werden unterdrueckt."""
+    names = [g.strip() for g in groups.split(",") if g.strip()]
+    dims = db.execute(
+        select(Dimension).join(Round, Round.survey_version_id == Dimension.survey_version_id)
+        .where(Round.id == round_id).order_by(Dimension.sort_order)
+    ).scalars().all()
+    result: dict = {"dimensions": [d.name for d in dims], "groups": {}, "company": {}}
+    for d in dims:
+        c = group_mean(db, round_id, d.id)
+        result["company"][d.name] = c["mean"] if c else None
+    for name in names:
+        row: dict = {}
+        n_leaders = 0
+        for d in dims:
+            g = group_mean(db, round_id, d.id, name)
+            if g is None:
+                row[d.name] = None
+                continue
+            n_leaders = g["leaders"]
+            comp = result["company"][d.name]
+            delta = round(g["mean"] - comp, 3) if comp is not None else None
+            row[d.name] = {"mean": g["mean"], "delta": delta, "ampel": traffic_light(delta)}
+        result["groups"][name] = {
+            "suppressed": all(v is None for v in row.values()), "leaders": n_leaders,
+            "dimensions": row, "nps": _group_nps(db, round_id, name),
+        }
+    result["company_nps"] = _group_nps(db, round_id, None)
+    result["nps_reference"] = get_nps_reference(db)
+    return result
+
+
+@admin_router.get("/nps/reference")
+def get_reference(db: Session = Depends(get_db)) -> dict:
+    return get_nps_reference(db) or {"value": None, "label": ""}
+
+
+@admin_router.put("/nps/reference")
+def put_reference(payload: dict, db: Session = Depends(get_db)) -> dict:
+    """Manuell hinterlegter Vergleichs-NPS (z. B. Branchenwert) fuer das externe Benchmarking."""
+    value = {"value": float(payload["value"]), "label": str(payload.get("label", ""))[:200]}
+    s = db.execute(select(Setting).where(Setting.key == "nps_reference")).scalar_one_or_none()
+    if s is None:
+        db.add(Setting(key="nps_reference", value=value))
+    else:
+        s.value = value
+    db.commit()
+    return value

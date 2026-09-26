@@ -1,6 +1,6 @@
 import { api } from './client';
 
-export type QuestionType = 'likert' | 'freitext';
+export type QuestionType = 'likert' | 'freitext' | 'choice' | 'nps';
 export type SurveyVersionStatus = 'entwurf' | 'gesperrt';
 
 export interface Dimension {
@@ -20,6 +20,12 @@ export interface Question {
 	pole_label_max: string | null;
 	mandatory: boolean;
 	sort_order: number;
+	help_text: string | null;
+	options: string[] | null;
+	allow_multiple: boolean;
+	show_if_question_id: number | null;
+	show_if_operator: string | null;
+	show_if_value: string | null;
 }
 
 export interface SurveyVersionSummary {
@@ -55,6 +61,12 @@ export interface QuestionInput {
 	pole_label_min?: string;
 	pole_label_max?: string;
 	mandatory?: boolean;
+	help_text?: string | null;
+	options?: string[] | null;
+	allow_multiple?: boolean;
+	show_if_question_id?: number | null;
+	show_if_operator?: string | null;
+	show_if_value?: string | null;
 }
 
 export const surveysApi = {

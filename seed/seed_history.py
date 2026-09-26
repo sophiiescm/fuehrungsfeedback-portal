@@ -34,6 +34,10 @@ TEXTS = ["Die Kommunikation im Team koennte klarer sein.", "Sehr wertschaetzende
          "Mehr Zeit fuer persoenliche Anliegen waere schoen.", "Faire Verteilung der Aufgaben."]
 
 
+def quality_mean(dims: dict) -> float:
+    return sum(dims.values()) / max(1, len(dims))
+
+
 def main() -> None:
     rng = random.Random(7)
     db = SessionLocal()
@@ -69,6 +73,17 @@ def main() -> None:
                 for q in version.questions:
                     if q.type == QuestionType.freitext:
                         r[f"Q{q.id}"] = rng.choice(TEXTS) if rng.random() < 0.7 else None
+                    elif q.type == QuestionType.nps:
+                        base = quality_mean(quality[l.id]) + drift
+                        r[f"Q{q.id}"] = str(min(10, max(0, round((base - 1) * 2.5 + rng.gauss(0, 1.8)))))
+                    elif q.type == QuestionType.choice:
+                        opts = q.options or []
+                        if q.allow_multiple:
+                            for i in range(len(opts)):
+                                if rng.random() < 0.4:
+                                    r[f"Q{q.id}[SQ{i + 1:03d}]"] = "Y"
+                        else:
+                            r[f"Q{q.id}"] = str(rng.randint(1, len(opts)))
                     else:
                         mu = quality[l.id].get(q.dimension_id, 3.5) + drift + rng.gauss(0, 0.4)
                         r[f"Q{q.id}"] = str(min(5, max(1, round(mu + rng.gauss(0, 0.8)))))

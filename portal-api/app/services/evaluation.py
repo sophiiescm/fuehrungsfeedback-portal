@@ -37,6 +37,25 @@ def _to_number(v) -> float | None:
         return None
 
 
+def _evaluate_choice(db: Session, target: RoundTarget, q: Question, responses: list[dict]) -> None:
+    """Auswahlfragen: Haeufigkeit je Option (Einfach- wie Mehrfachauswahl); n = antwortende Personen."""
+    options = q.options or []
+    counts = {o: 0 for o in options}
+    answered = 0
+    for r in responses:
+        if q.allow_multiple:
+            picked = [options[i] for i in range(len(options)) if r.get(f"Q{q.id}[SQ{i + 1:03d}]") == "Y"]
+        else:
+            code = _to_number(r.get(f"Q{q.id}"))
+            picked = [options[int(code) - 1]] if code and 1 <= int(code) <= len(options) else []
+        if picked:
+            answered += 1
+            for o in picked:
+                counts[o] += 1
+    if answered >= effective_threshold():
+        db.add(ResultAggregate(round_target_id=target.id, question_id=q.id, n=answered, distribution=counts))
+
+
 def evaluate_target(db: Session, target: RoundTarget, responses: list[dict], name_pattern, pnrs: set[str]) -> Report:
     """Reine Berechnung auf bereits exportierten Antworten (testbar ohne LimeSurvey)."""
     db.execute(delete(ResultAggregate).where(ResultAggregate.round_target_id == target.id))
@@ -60,11 +79,19 @@ def evaluate_target(db: Session, target: RoundTarget, responses: list[dict], nam
     ).scalars().all()
 
     per_dimension: dict[int, list[list[float]]] = {}  # dimension_id -> Liste je Antwort
-    freetext: list[str] = []
+    freetext_groups: list[dict] = []
+    all_texts: list[str] = []
+    threshold = effective_threshold()
     for q in questions:
         col = f"Q{q.id}"
         if q.type == QuestionType.freitext:
-            freetext += [r[col] for r in responses if isinstance(r.get(col), str)]
+            texts = redact_and_shuffle([r[col] for r in responses if isinstance(r.get(col), str)], name_pattern, pnrs)
+            if len(texts) >= threshold:  # zu wenige Texte je Frage -> Rueckschluss moeglich, nicht anzeigen
+                freetext_groups.append({"question_id": q.id, "question": q.text, "texts": texts})
+                all_texts += texts
+            continue
+        if q.type == QuestionType.choice:
+            _evaluate_choice(db, target, q, responses)
             continue
         values = [n for r in responses if (n := _to_number(r.get(col))) is not None]
         st = compute_stats(values)
@@ -72,7 +99,7 @@ def evaluate_target(db: Session, target: RoundTarget, responses: list[dict], nam
             db.add(ResultAggregate(round_target_id=target.id, question_id=q.id, n=st.n, min_value=st.min,
                                    max_value=st.max, mean=st.mean, median=st.median, stddev=st.stddev,
                                    distribution=st.distribution))
-        if q.dimension_id:
+        if q.dimension_id and q.type == QuestionType.likert:
             per_dimension.setdefault(q.dimension_id, [])
             for i, r in enumerate(responses):
                 n = _to_number(r.get(col))
@@ -90,9 +117,8 @@ def evaluate_target(db: Session, target: RoundTarget, responses: list[dict], nam
                                    max_value=st.max, mean=st.mean, median=st.median, stddev=st.stddev,
                                    distribution=st.distribution))
 
-    texts = redact_and_shuffle(freetext, name_pattern, pnrs)
-    report.freetext = texts if len(texts) >= effective_threshold() else None  # zu wenige Freitexte -> Rueckschluss moeglich
-    report.ai_summary = ai.summarize(report.freetext) if report.freetext else None
+    report.freetext = freetext_groups or None
+    report.ai_summary = ai.summarize(all_texts) if all_texts else None
     db.commit()
     return report
 
