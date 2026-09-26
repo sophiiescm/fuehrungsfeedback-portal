@@ -132,3 +132,29 @@ test('Mehrsprachigkeit: Sprache im Editor hinzufügen, übersetzen; Nutzer wähl
 	await expect(page.getByText('✓ gespeichert')).toBeVisible();
 	await sel.selectOption('de');
 });
+
+test('Report-Layout: eigene Textbausteine, anpassbare Festtexte und Platzhalter mit Live-Vorschau', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1100 });
+	await loginAs(page, 'P00001', '/report-layout');
+	const frame = page.frameLocator('iframe[title="Vorschau des Reports"]');
+	await expect(frame.getByText('Beispiel-Runde')).toBeVisible();
+
+	await page.getByRole('button', { name: '＋ Textbaustein hinzufügen' }).click();
+	const block = page.getByLabel('Text des Bausteins').last();
+	await block.fill('Hallo ');
+	await page.getByRole('button', { name: '{leader}' }).click();
+	await block.pressSequentially(', dein bestes Thema ist ');
+	await page.getByRole('button', { name: '{best_topic}' }).click();
+	await expect(frame.getByText('Hallo Alex Beispiel, dein bestes Thema ist Wertschätzung')).toBeVisible();
+
+	const good = page.getByLabel('Stärken: Überschrift');
+	await good.fill('Unsere Stärken');
+	await expect(frame.getByText('Unsere Stärken')).toBeVisible();
+	await page.getByRole('button', { name: 'Standard' }).first().click();
+	await expect(frame.getByText('Das läuft gut')).toBeVisible();
+
+	await page.getByLabel('Text „Wie lese ich den Report?“').fill('- **Wichtig:** Werte sind anonym\n- Ab 3 Antworten');
+	await expect(frame.getByText('Wichtig:')).toBeVisible();
+	await expect(page.getByText('Ungespeicherte Änderungen')).toBeVisible();
+	await page.screenshot({ path: 'e2e/screens/report-texte.png' });
+});

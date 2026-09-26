@@ -18,7 +18,8 @@ class LayoutIn(BaseModel):
 
 @router.get("")
 def get_config(db: Session = Depends(get_db)) -> dict:
-    return {"config": report_layout.get_layout(db), "catalog": report_layout.catalog(), "default": report_layout.DEFAULT}
+    return {"config": report_layout.get_layout(db), "catalog": report_layout.catalog(), "default": report_layout.DEFAULT,
+            "texts": report_layout.text_catalog(), "placeholders": report_layout.placeholders()}
 
 
 @router.put("")

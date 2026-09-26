@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import csv
 import io
+import re
+from datetime import date
 
 from jinja2 import Environment
+from markupsafe import Markup, escape
 
-from app.services.report_layout import normalize
+from app.services.report_layout import PLACEHOLDERS, TEXTS, normalize
 
 SAMPLE: dict = {
     "available": True, "round_name": "Beispiel-Runde H1/2026", "leader_name": "Alex Beispiel", "n_responses": 12,
@@ -48,6 +51,42 @@ def choice_label(q: dict, key) -> str:
         return str(key)
 
 
+def md_html(text: str) -> Markup:
+    """Einfache Formatierung: Absaetze (Leerzeile), Aufzaehlung ('- '), **fett**. Alles andere wird maskiert."""
+    blocks = re.split(r"\n\s*\n", (text or "").strip())
+    out = []
+    for b in blocks:
+        lines = [ln for ln in b.split("\n") if ln.strip()]
+        if not lines:
+            continue
+
+        def inline(t: str) -> str:
+            return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", str(escape(t)))
+
+        if all(ln.lstrip().startswith("- ") for ln in lines):
+            out.append("<ul>" + "".join(f"<li>{inline(ln.lstrip()[2:])}</li>" for ln in lines) + "</ul>")
+        else:
+            out.append("<p>" + "<br>".join(inline(ln) for ln in lines) + "</p>")
+    return Markup("".join(out))
+
+
+def md_lines(text: str) -> list[str]:
+    """Fuer PowerPoint: Absaetze/Aufzaehlungen als Textzeilen (ohne **)."""
+    lines = []
+    for ln in (text or "").splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        ln = re.sub(r"\*\*(.+?)\*\*", r"\1", ln)
+        lines.append("• " + ln[2:] if ln.startswith("- ") else ln)
+    return lines
+
+
+def _fill(t: str, values: dict) -> str:
+    """Platzhalter {name} ersetzen; unbekannte Platzhalter bleiben sichtbar stehen."""
+    return re.sub(r"\{(\w+)\}", lambda m: str(values.get(m.group(1), m.group(0))), t or "")
+
+
 def darken(hex_color: str, factor: float = 0.4) -> str:
     """Dunklere Variante fuer Text/Ueberschriften (helle Markenfarbe hat auf Weiss zu wenig Kontrast)."""
     h = hex_color.lstrip("#")
@@ -63,19 +102,27 @@ def prepare(detail: dict, layout: dict) -> dict:
     overall = avg([d["mean"] for d in dims])
     prev = avg([d["vorrunde"]["mean"] for d in dims]) if dims and all(d.get("vorrunde") for d in dims) else None
     comp = avg([d["unternehmen"]["mean"] for d in dims]) if dims and all(d.get("unternehmen") for d in dims) else None
-    fmt = dict(round=detail.get("round_name", ""), leader=detail.get("leader_name", ""), n=detail.get("n_responses", 0))
+    best = ordered[0]["dimension"] if ordered else ""
+    weak = ordered[-1]["dimension"] if ordered else ""
+    nps = detail.get("nps") or {}
+    fmt = dict(
+        round=detail.get("round_name", ""), leader=detail.get("leader_name", ""), n=detail.get("n_responses", 0),
+        date=date.today().strftime("%d.%m.%Y"), overall=_f(overall, 1) if overall is not None else "–",
+        overall_delta_prev=(("+" if overall - prev >= 0 else "−") + _f(abs(overall - prev), 1)) if overall is not None and prev is not None else "–",
+        company_avg=_f(comp, 1) if comp is not None else "–", best_topic=best, weak_topic=weak,
+        nps=nps.get("score") if nps.get("score") is not None else "–",
+    )
 
     def fill(t: str) -> str:
-        try:
-            return t.format(**fmt)
-        except (KeyError, IndexError, ValueError):
-            return t
+        return _fill(t, fmt)
+
+    txt = {k: fill(layout["texts"].get(k, v[1])) for k, v in TEXTS.items()}
 
     return {
-        "d": detail, "layout": layout, "accent_dark": darken(layout["accent"]), "title": fill(layout["title"]), "subtitle": fill(layout["subtitle"]),
+        "txt": txt, "md": md_html, "d": detail, "layout": layout, "accent_dark": darken(layout["accent"]), "title": fill(layout["title"]), "subtitle": fill(layout["subtitle"]),
         "overall": overall, "overall_prev": prev, "overall_company": comp,
         "strengths": ordered[:2], "growth": list(reversed(ordered))[:2], "dims": ordered,
-        "sections": [s for s in layout["sections"] if s["enabled"] and _has_data(s["key"], detail)],
+        "sections": [dict(s, title=fill(s["title"]), body=fill(s.get("body", ""))) for s in layout["sections"] if s["enabled"] and _has_data(s["key"], detail)],
         "f": _f, "choice_label": choice_label,
     }
 
@@ -87,7 +134,7 @@ def _has_data(key: str, d: dict) -> bool:
         "choices": any(q.get("type") == "choice" for q in d.get("questions") or []),
         "ai_summary": bool(d.get("ai_summary")), "categories": bool(d.get("categories")),
         "wordcloud": bool(d.get("wordcloud")), "freetext": bool(d.get("freetext")), "guide": True,
-    }.get(key, False)
+    }.get(key, key.startswith("custom:"))
 
 
 _HTML = """<html><head><meta charset="utf-8"><style>
@@ -98,19 +145,19 @@ h1{color:{{ accent_dark }};font-size:20pt;margin:0 0 2mm}h2{color:{{ accent_dark
 table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:3px 5px;text-align:left;font-size:9pt}th{background:#f1f2f8}
 .bar{background:{{ layout.accent }};height:8px}.big{font-size:26pt;font-weight:bold;color:{{ accent_dark }}}
 .good{color:#15803d}.bad{color:#b91c1c}.muted{color:#666;font-size:8.5pt}.cols{width:100%}.cols td{border:0;vertical-align:top;width:50%}
-.tag{display:inline-block;padding:1px 6px;margin:1px;border:1px solid #ccc;border-radius:8px;font-size:9pt}
+.custom p,.closing p{margin:2mm 0}.closing{margin-top:8mm;border-top:1px solid #ccc;padding-top:3mm}.tag{display:inline-block;padding:1px 6px;margin:1px;border:1px solid #ccc;border-radius:8px;font-size:9pt}
 </style></head><body>
 <h1>{{ title }}</h1><p class="sub">{{ subtitle }}</p>
 {% if layout.intro %}<p class="intro">{{ layout.intro }}</p>{% endif %}
 {% for s in sections %}
 {% if s.key == 'summary' %}<h2>{{ s.title }}</h2>
-<p><span class="big">{{ f(overall) }}</span> von 5
-{% if overall_prev is not none %} · {{ '▲' if overall >= overall_prev else '▼' }} {{ f(overall - overall_prev) }} zur Vorrunde{% endif %}
-{% if overall_company is not none %} · {{ '▲' if overall >= overall_company else '▼' }} {{ f(overall - overall_company) }} zum Unternehmen (Ø {{ f(overall_company) }}){% endif %}
-· {{ d.n_responses }} Antworten</p>
+<p><span class="big">{{ f(overall) }}</span> {{ txt.summary_scale }}
+{% if overall_prev is not none %} · {{ '▲' if overall >= overall_prev else '▼' }} {{ f(overall - overall_prev) }} {{ txt.summary_prev }}{% endif %}
+{% if overall_company is not none %} · {{ '▲' if overall >= overall_company else '▼' }} {{ f(overall - overall_company) }} {{ txt.summary_company }} (Ø {{ f(overall_company) }}){% endif %}
+· {{ d.n_responses }} {{ txt.summary_responses }}</p>
 {% elif s.key == 'highlights' %}<h2>{{ s.title }}</h2>
-<table class="cols"><tr><td><b class="good">▲ Das läuft gut</b><br>{% for x in strengths %}{{ x.dimension }}: {{ f(x.mean) }}<br>{% endfor %}</td>
-<td><b class="bad">▼ Hier steckt Potenzial</b><br>{% for x in growth %}{{ x.dimension }}: {{ f(x.mean) }}<br>{% endfor %}</td></tr></table>
+<table class="cols"><tr><td><b class="good">▲ {{ txt.good_label }}</b><br>{% for x in strengths %}{{ x.dimension }}: {{ f(x.mean) }}<br>{% endfor %}</td>
+<td><b class="bad">▼ {{ txt.growth_label }}</b><br>{% for x in growth %}{{ x.dimension }}: {{ f(x.mean) }}<br>{% endfor %}</td></tr></table>
 {% elif s.key == 'dimensions' %}<h2>{{ s.title }}</h2>
 <table><tr><th>Thema</th><th>Ø</th>{% if layout.columns.median %}<th>Median</th>{% endif %}{% if layout.columns.stddev %}<th>Std.abw.</th>{% endif %}{% if layout.columns.minmax %}<th>Min/Max</th>{% endif %}
 {% if layout.columns.fachbereich %}<th>Fachbereich</th>{% endif %}{% if layout.columns.unternehmen %}<th>Unternehmen</th>{% endif %}{% if layout.columns.vorrunde %}<th>Vorrunde</th>{% endif %}</tr>
@@ -129,12 +176,14 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:3p
 {% for q in d.questions if q.type == 'choice' %}<p><b>{{ q.question }}</b> <span class="muted">({{ q.n }} Antworten)</span></p><table>
 {% for k, v in q.distribution.items() %}<tr><td style="width:40%">{{ choice_label(q, k) }}</td><td>{{ v }}<div class="bar" style="width:{{ (v / q.n * 100)|round if q.n else 0 }}%"></div></td></tr>{% endfor %}</table>{% endfor %}
 {% elif s.key == 'ai_summary' %}<h2>{{ s.title }}</h2><p>{{ d.ai_summary }}</p>
-{% elif s.key == 'categories' %}<h2>{{ s.title }}</h2>{% for c in d.categories %}<p><b>{{ c.category }}</b> ({{ c.count }})</p><ul>{% for t in c.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}
+{% elif s.key == 'categories' %}<h2>{{ s.title }}</h2>{% for c in d.categories %}<p><b>{{ c.category }}</b> ({{ c.count }})</p><ul>{% for t in c.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}{% if txt.freetext_note %}<p class="muted">{{ txt.freetext_note }}</p>{% endif %}
 {% elif s.key == 'wordcloud' %}<h2>{{ s.title }}</h2><p>{% for w in d.wordcloud %}<span class="tag" style="font-size:{{ 8 + [w.count, 8]|min * 1.5 }}pt">{{ w.word }}</span>{% endfor %}</p>
-{% elif s.key == 'freetext' %}<h2>{{ s.title }}</h2>{% for g in d.freetext %}<p><b>{{ g.question }}</b></p><ul>{% for t in g.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}
-{% elif s.key == 'guide' %}<h2>{{ s.title }}</h2><p class="muted">Die Werte reichen von 1 (trifft gar nicht zu) bis 5 (trifft voll zu) und sind Durchschnitte aller Antworten. Ergebnisse werden nur ab 3 Antworten gezeigt; Freitexte sind von Namen und Kontaktdaten bereinigt und nicht rückverfolgbar.</p>
+{% elif s.key == 'freetext' %}<h2>{{ s.title }}</h2>{% for g in d.freetext %}<p><b>{{ g.question }}</b></p><ul>{% for t in g.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}{% if txt.freetext_note %}<p class="muted">{{ txt.freetext_note }}</p>{% endif %}
+{% elif s.key == 'guide' %}<h2>{{ s.title }}</h2><div class="muted">{{ md(txt.guide_body) }}</div>
+{% elif s.key.startswith('custom:') %}<h2>{{ s.title }}</h2><div class="custom">{{ md(s.body) }}</div>
 {% endif %}
 {% endfor %}
+{% if txt.closing %}<div class="closing">{{ md(txt.closing) }}</div>{% endif %}
 </body></html>"""
 
 _env = Environment(autoescape=True)
@@ -210,18 +259,18 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
         if k == "summary":
             s = new_slide(title)
             text(s, f(ctx["overall"], 1), 0.8, 1.7, 4, 2, 90, True, acc_text)
-            text(s, "von 5", 4.2, 3.0, 2, 0.8, 24)
+            text(s, ctx["txt"]["summary_scale"], 4.2, 3.0, 2.6, 0.8, 24)
             lines = []
             if ctx["overall_prev"] is not None:
-                lines.append(f"{'▲' if ctx['overall'] >= ctx['overall_prev'] else '▼'} {f(ctx['overall'] - ctx['overall_prev'], 1)} zur Vorrunde")
+                lines.append(f"{'▲' if ctx['overall'] >= ctx['overall_prev'] else '▼'} {f(ctx['overall'] - ctx['overall_prev'], 1)} {ctx['txt']['summary_prev']}")
             if ctx["overall_company"] is not None:
-                lines.append(f"{'▲' if ctx['overall'] >= ctx['overall_company'] else '▼'} {f(ctx['overall'] - ctx['overall_company'], 1)} zum Unternehmen (Ø {f(ctx['overall_company'], 1)})")
-            lines.append(f"{d.get('n_responses', 0)} Antworten")
+                lines.append(f"{'▲' if ctx['overall'] >= ctx['overall_company'] else '▼'} {f(ctx['overall'] - ctx['overall_company'], 1)} {ctx['txt']['summary_company']} (Ø {f(ctx['overall_company'], 1)})")
+            lines.append(f"{d.get('n_responses', 0)} {ctx['txt']['summary_responses']}")
             text(s, "\n".join(lines), 7, 2.0, 5.8, 3, 22)
         elif k == "highlights":
             s = new_slide(title)
-            text(s, "▲ Das läuft gut\n" + "\n".join(f"{x['dimension']}: {f(x['mean'], 1)}" for x in ctx["strengths"]), 0.8, 1.8, 5.8, 3, 24, False, RGBColor(0x15, 0x80, 0x3D))
-            text(s, "▼ Hier steckt Potenzial\n" + "\n".join(f"{x['dimension']}: {f(x['mean'], 1)}" for x in ctx["growth"]), 7, 1.8, 5.8, 3, 24, False, RGBColor(0xB9, 0x1C, 0x1C))
+            text(s, "▲ " + ctx["txt"]["good_label"] + "\n" + "\n".join(f"{x['dimension']}: {f(x['mean'], 1)}" for x in ctx["strengths"]), 0.8, 1.8, 5.8, 3, 24, False, RGBColor(0x15, 0x80, 0x3D))
+            text(s, "▼ " + ctx["txt"]["growth_label"] + "\n" + "\n".join(f"{x['dimension']}: {f(x['mean'], 1)}" for x in ctx["growth"]), 7, 1.8, 5.8, 3, 24, False, RGBColor(0xB9, 0x1C, 0x1C))
         elif k == "dimensions":
             s = new_slide(title)
             cd = CategoryChartData()
@@ -284,7 +333,13 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
             text(s, "  ·  ".join(f"{w['word']} ({w['count']})" for w in d.get("wordcloud") or []), 0.8, 1.8, 11.8, 4, 24, False, acc_text)
         elif k == "guide":
             s = new_slide(title)
-            text(s, "Die Werte reichen von 1 (trifft gar nicht zu) bis 5 (trifft voll zu) und sind Durchschnitte aller Antworten.\nErgebnisse werden nur ab 3 Antworten gezeigt.\nFreitexte sind von Namen und Kontaktdaten bereinigt und nicht rückverfolgbar.", 0.8, 1.8, 11.8, 4, 22)
+            text(s, "\n".join(md_lines(ctx["txt"]["guide_body"])), 0.8, 1.8, 11.8, 4, 22)
+        elif k.startswith("custom:"):
+            s = new_slide(title)
+            text(s, "\n".join(md_lines(sec["body"])), 0.8, 1.6, 11.8, 5, 22)
+    if ctx["txt"]["closing"]:
+        s = new_slide("")
+        text(s, "\n".join(md_lines(ctx["txt"]["closing"])), 0.8, 2.4, 11.8, 3.5, 24)
     buf = io.BytesIO()
     prs.save(buf)
     return buf.getvalue()

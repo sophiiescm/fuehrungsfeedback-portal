@@ -95,3 +95,50 @@ def test_benchmark_export_formats_for_results_viewers(client, seeded_users, db_s
     assert client.get(f"/benchmark/export.xlsx?round_id={r.id}", headers=h).content[:2] == b"PK"
     assert client.get(f"/benchmark/export.pptx?round_id={r.id}", headers=h).content[:2] == b"PK"
     assert client.get("/benchmark/export.xlsx?round_id=999", headers=h).status_code == 404
+
+
+def test_custom_text_blocks_overrides_placeholders_and_escaping():
+    cfg = report_layout.normalize({
+        "texts": {"guide_body": "Hallo {leader}, dein bestes Thema: **{best_topic}**.\n\n- Punkt A\n- Punkt B", "closing": "Fragen? Melde dich bei HR.", "good_label": "Stark!"},
+        "sections": [
+            {"key": "custom:abc1", "enabled": True, "title": "Liebe/r {leader}", "body": "Gesamt: {overall} <script>alert(1)</script>\n\nZweiter Absatz"},
+            {"key": "custom:bad key", "enabled": True, "title": "x", "body": "y"},  # ungueltige ID -> verworfen
+            {"key": "guide", "enabled": True, "title": "Lesehilfe"},
+        ],
+    })
+    assert [s["key"] for s in cfg["sections"] if s["key"].startswith("custom")] == ["custom:abc1"]
+    assert cfg["sections"][0]["body"].startswith("Gesamt")
+    html = report_render.render_html(report_render.SAMPLE, cfg)
+    assert "Liebe/r Alex Beispiel" in html and "Gesamt: 3,8" in html.replace("3,80", "3,8") or "Gesamt: 3,8" in html
+    assert "<script>" not in html and "&lt;script&gt;" in html  # Eingaben werden maskiert
+    assert "<strong>Wertschätzung</strong>" in html and "<li>Punkt A</li>" in html  # Markdown-lite
+    assert "Stark!" in html and "Fragen? Melde dich bei HR." in html
+    assert html.index("Liebe/r") < html.index("Lesehilfe")
+
+
+def test_text_override_equal_to_default_is_dropped_and_limits():
+    d = report_layout.TEXTS["good_label"][1]
+    cfg = report_layout.normalize({"texts": {"good_label": d, "unbekannt": "x"}, "sections": [{"key": f"custom:a{i}", "title": "t"} for i in range(15)]})
+    assert cfg["texts"] == {}
+    assert len([s for s in cfg["sections"] if s["key"].startswith("custom:")]) == report_layout.MAX_CUSTOM
+
+
+def test_pptx_contains_custom_block_and_closing():
+    from pptx import Presentation
+    cfg = report_layout.normalize({"texts": {"closing": "Danke fürs Lesen"}, "sections": [{"key": "custom:x1", "title": "Eigener Text", "body": "- Eins\n- Zwei"}]})
+    prs = Presentation(io.BytesIO(report_render.build_pptx(report_render.SAMPLE, cfg)))
+    text = " ".join(sh.text_frame.text for sl in prs.slides for sh in sl.shapes if sh.has_text_frame)
+    assert "Eigener Text" in text and "• Eins" in text and "Danke fürs Lesen" in text
+
+
+def test_layout_api_exposes_text_catalog_and_placeholders(client, seeded_users):
+    h = _h(client, "T-ADMIN")
+    r = client.get("/report-layout", headers=h).json()
+    assert {t["key"] for t in r["texts"]} >= {"guide_body", "good_label", "closing"}
+    assert {p["key"] for p in r["placeholders"]} >= {"leader", "overall", "best_topic"}
+    cfg = r["config"]
+    cfg["texts"] = {"good_label": "Stark!"}
+    cfg["sections"].append({"key": "custom:n1", "enabled": True, "title": "Neu", "body": "Text {leader}"})
+    saved = client.put("/report-layout", json={"config": cfg}, headers=h).json()["config"]
+    assert saved["texts"] == {"good_label": "Stark!"} and any(s["key"] == "custom:n1" for s in saved["sections"])
+    assert "Text Alex Beispiel" in client.post("/report-layout/preview", json={"config": saved}, headers=h).json()["html"]

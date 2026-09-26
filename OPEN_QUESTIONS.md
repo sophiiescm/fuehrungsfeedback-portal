@@ -63,3 +63,8 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 2. **Sprache als Rückschluss:** LimeSurvey speichert die Startsprache jeder Antwort. In Teams mit nur einer Person einer Sprache ließe sich eine Antwort erraten. Soll die Sprachwahl trotzdem erlaubt sein (Annahme: ja, Rohdaten sind nicht zugänglich und werden nach 90 Tagen gelöscht) oder nur, wenn ≥ 3 Personen der Sprache im Team sind?
 3. **Übrige Texte:** E-Mail-Einladungen, Portal-Oberfläche, PDF/PowerPoint-Reports sind deutsch. Soll das Portal selbst auch mehrsprachig werden (Aufwand: Übersetzung aller Oberflächentexte)?
 4. **KI-Übersetzung:** Freigabe eines Providers durch Datenschutz nötig (Fragetexte sind unkritisch, enthalten aber keine personenbezogenen Daten).
+
+## Neu: Textbausteine im Report
+1. **Freigabe/Versionierung:** Texte gelten sofort für alle neuen Exporte. Soll es einen Freigabeprozess oder einen Änderungsverlauf geben (wer hat wann welchen Text geändert)? Aktuell steht jede Speicherung im Audit-Log (nur Pfad, nicht Inhalt).
+2. **Rechtssichere Formulierungen:** Datenschutz-/Vertraulichkeitshinweise im Report bitte mit DSB/Betriebsrat abstimmen, bevor sie geändert werden (Standardtexte stammen von uns).
+3. **Mehrsprachige Reports:** Texte gibt es nur in einer Fassung (Deutsch).
