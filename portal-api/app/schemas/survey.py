@@ -7,6 +7,7 @@ class DimensionOut(BaseModel):
     id: int
     name: str
     sort_order: int
+    translations: dict | None = None
 
 
 class DimensionIn(BaseModel):
@@ -31,6 +32,7 @@ class QuestionOut(BaseModel):
     show_if_question_id: int | None = None
     show_if_operator: str | None = None
     show_if_value: str | None = None
+    translations: dict | None = None
 
 
 class QuestionIn(BaseModel):
@@ -102,6 +104,7 @@ class SurveyVersionDetailOut(BaseModel):
     version_number: int
     status: SurveyVersionStatus
     limesurvey_template_sid: int | None
+    languages: list[str] = []
     dimensions: list[DimensionOut]
     questions: list[QuestionOut]
 

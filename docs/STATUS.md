@@ -96,3 +96,8 @@ Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten 
 - „Meine Feedbacks“: Verlauf mit Status je Runde; abgegebene Antworten nur lesbar und – anonymitätsgerecht – als lokale Kopie auf dem Gerät ansehbar (Ende-zu-Ende in echtem Browser mit LimeSurvey geprüft: 26 Antworten wurden übernommen).
 - Teams werden vor jedem Rundenstart aus der SAP-Quelle aktualisiert; Assistent zeigt Stand und „Jetzt aus SAP aktualisieren“ (Mock/CSV getestet, echtes SAP nicht).
 - Tests: 113 Backend, 14 Playwright.
+
+## Nachtrag 6: Runden-Assistent, Mehrsprachigkeit
+- Empfängervorschau entfernt; Automatik (Wiederholung) direkt im Assistenten wählbar, Plus-Menü mit Automatik-Eintrag.
+- Mehrsprachige Fragebögen (Editor mit Sprachleiste/Übersetzungsansicht, LimeSurvey-Export je Sprache) und persönliche Umfragesprache pro Nutzer; Ende-zu-Ende mit LimeSurvey geprüft (DE/EN/TR mit Rückfall auf Deutsch).
+- Tests: 117 Backend, 16 Playwright. KI-Übersetzung nur gegen Provider-Mock-Logik geprüft (kein echter Provider).

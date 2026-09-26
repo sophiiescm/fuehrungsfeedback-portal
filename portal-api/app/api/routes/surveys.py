@@ -43,7 +43,7 @@ def _get_version_or_404(db: Session, version_id: int) -> SurveyVersion:
 
 QUESTION_FIELDS = ("id", "dimension_id", "type", "text", "scale_min", "scale_max", "pole_label_min",
                    "pole_label_max", "scale_labels", "mandatory", "sort_order", "help_text", "options", "allow_multiple",
-                   "show_if_question_id", "show_if_operator", "show_if_value")
+                   "show_if_question_id", "show_if_operator", "show_if_value", "translations")
 
 
 def _clean_labels(labels, scale_min, scale_max, q_type):
@@ -82,8 +82,9 @@ def _version_to_detail(version: SurveyVersion) -> SurveyVersionDetailOut:
         version_number=version.version_number,
         status=version.status,
         limesurvey_template_sid=version.limesurvey_template_sid,
+        languages=version.languages or [],
         dimensions=[
-            DimensionOut(id=d.id, name=d.name, sort_order=d.sort_order)
+            DimensionOut(id=d.id, name=d.name, sort_order=d.sort_order, translations=d.translations)
             for d in sorted(version.dimensions, key=lambda d: d.sort_order)
         ],
         questions=[

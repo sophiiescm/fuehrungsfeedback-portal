@@ -44,13 +44,14 @@ def clone_as_new_version(db: Session, version: SurveyVersion) -> SurveyVersion:
         survey_template_id=version.survey_template_id,
         version_number=latest_number + 1,
         status=SurveyVersionStatus.entwurf,
+        languages=list(version.languages or []),
     )
     db.add(new_version)
     db.flush()
 
     dimension_id_map: dict[int, int] = {}
     for dim in sorted(version.dimensions, key=lambda d: d.sort_order):
-        new_dim = Dimension(survey_version_id=new_version.id, name=dim.name, sort_order=dim.sort_order)
+        new_dim = Dimension(survey_version_id=new_version.id, name=dim.name, sort_order=dim.sort_order, translations=dim.translations)
         db.add(new_dim)
         db.flush()
         dimension_id_map[dim.id] = new_dim.id
@@ -66,6 +67,7 @@ def clone_as_new_version(db: Session, version: SurveyVersion) -> SurveyVersion:
                 scale_max=q.scale_max,
                 pole_label_min=q.pole_label_min,
                 scale_labels=q.scale_labels,
+                translations=q.translations,
                 pole_label_max=q.pole_label_max,
                 mandatory=q.mandatory,
                 sort_order=q.sort_order,

@@ -41,6 +41,7 @@ class SurveyVersion(Base):
     )
     # LimeSurvey-Vorlagen-Survey-ID, sobald einmal per import_survey uebertragen (Phase 3)
     limesurvey_template_sid: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    languages: Mapped[list | None] = mapped_column(JSON, nullable=True)  # zusaetzliche Sprachen (Standard: de)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     survey_template: Mapped["SurveyTemplate"] = relationship(back_populates="versions")
@@ -59,6 +60,7 @@ class Dimension(Base):
     survey_version_id: Mapped[int] = mapped_column(ForeignKey("survey_version.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    translations: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # {"en": {"name": ...}}
 
     survey_version: Mapped["SurveyVersion"] = relationship(back_populates="dimensions")
     questions: Mapped[list["Question"]] = relationship(back_populates="dimension")
@@ -78,6 +80,7 @@ class Question(Base):
     pole_label_max: Mapped[str | None] = mapped_column(String(200), nullable=True)
     scale_labels: Mapped[list | None] = mapped_column(JSON, nullable=True)  # Beschriftung jeder Skalenstufe (Likert)
     mandatory: Mapped[bool] = mapped_column(default=True)
+    translations: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # {"en": {"text","help_text","options","scale_labels",...}}
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     # Code der Frage in LimeSurvey (z.B. "G01Q03"), gesetzt nach Uebertragung
     limesurvey_question_code: Mapped[str | None] = mapped_column(String(50), nullable=True)

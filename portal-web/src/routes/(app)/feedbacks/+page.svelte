@@ -8,6 +8,10 @@
 	let items = $state<MyFeedback[]>([]);
 	let loaded = $state(false);
 	let view = $state<{ title: string; receipt: Receipt; sid: number } | null>(null);
+	let picked = $state<Record<number, string>>({});
+	const LANG_NAMES: Record<string, string> = { de: 'Deutsch', en: 'English', tr: 'Türkçe', pl: 'Polski', ru: 'Русский', ro: 'Română', uk: 'Українська', ar: 'العربية', es: 'Español', fr: 'Français', it: 'Italiano', nl: 'Nederlands', pt: 'Português', bg: 'Български', hr: 'Hrvatski', cs: 'Čeština', hu: 'Magyar', el: 'Ελληνικά', sq: 'Shqip', bs: 'Bosanski' };
+	const langFor = (f: MyFeedback) => picked[f.participation_id] ?? ((f.languages ?? ['de']).includes(auth.user?.language ?? 'de') ? (auth.user?.language ?? 'de') : 'de');
+	const linkFor = (f: MyFeedback) => (f.feedback_link ? `${f.feedback_link}/lang/${langFor(f)}` : null);
 	let receiptVersion = $state(0); // erzwingt Neuberechnung nach Loeschen
 
 	onMount(async () => {
@@ -72,7 +76,18 @@
 						Fällig bis {f.due_date}{#if days(f.due_date) <= 3 && days(f.due_date) >= 0} · <strong style="color: var(--warning)">nur noch {days(f.due_date)} Tage</strong>{/if} · ca. 5 Minuten
 					</p>
 				</div>
-				{#if f.feedback_link}<a href={f.feedback_link} class="cta">Jetzt starten</a>{/if}
+				{#if f.feedback_link}
+					<div class="flex flex-col items-stretch gap-2 sm:items-end">
+						<a href={linkFor(f)} class="cta">Jetzt starten</a>
+						{#if (f.languages ?? []).length > 1}
+							<label class="text-xs" style="color: var(--text-secondary)">🌐
+								<select class="glass-surface rounded px-2 py-1" value={langFor(f)} aria-label="Sprache der Umfrage" onchange={(e) => (picked[f.participation_id] = e.currentTarget.value)}>
+									{#each f.languages ?? [] as c (c)}<option value={c}>{LANG_NAMES[c] ?? c}</option>{/each}
+								</select>
+							</label>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		{/each}
 	</div>

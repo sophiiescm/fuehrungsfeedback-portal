@@ -35,6 +35,7 @@ class Person(Base):
     manager_personalnummer: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     standort: Mapped[str | None] = mapped_column(String(200), nullable=True)
     aktiv: Mapped[bool] = mapped_column(Boolean, default=True)
+    language: Mapped[str | None] = mapped_column(String(8), nullable=True)  # bevorzugte Fragebogen-Sprache
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

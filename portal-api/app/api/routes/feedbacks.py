@@ -49,6 +49,7 @@ def my_feedbacks(
                 completed_date=p.completed_date.isoformat() if p.completed_date else None,
                 survey_id=target.limesurvey_sid,
                 round_closed=round_.status != RoundStatus.offen,
+                languages=["de"] + [c for c in (round_.survey_version.languages or []) if c != "de"],
             )
         )
     return result

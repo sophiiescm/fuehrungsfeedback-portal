@@ -3,6 +3,7 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import DevSwitcher from './DevSwitcher.svelte';
+	import LanguagePicker from './LanguagePicker.svelte';
 
 	let open = $state(false);
 	const initials = $derived(
@@ -44,6 +45,7 @@
 				<p class="text-xs" style="color: var(--text-secondary)">{auth.user?.email ?? 'keine E-Mail hinterlegt'}</p>
 				<p class="text-xs" style="color: var(--text-muted)">Personalnummer {auth.user?.personalnummer}</p>
 			</div>
+			<LanguagePicker />
 			<DevSwitcher />
 			<ThemeToggle />
 			<button onclick={() => auth.logout()} class="rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm" style="background: var(--surface-glass); color: var(--text-primary)" role="menuitem">Abmelden</button>

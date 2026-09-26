@@ -99,3 +99,36 @@ test('Meine Feedbacks: Verlauf mit Teilnahme-Status und lokal gespeicherter, nur
 	await page.getByRole('button', { name: 'Kopie von diesem Gerät löschen' }).click();
 	await expect(page.getByRole('button', { name: 'Meine Antworten ansehen' })).toHaveCount(0);
 });
+
+test('Mehrsprachigkeit: Sprache im Editor hinzufügen, übersetzen; Nutzer wählt eigene Umfragesprache', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 1000 });
+	await loginAs(page, 'P00001', '/dashboard');
+	// eigenen, frischen Entwurf anlegen (unabhängig von vorhandenen Umfragen)
+	const vid = await page.evaluate(async (api) => {
+		const h = { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('ffp_token')}` };
+		const t = await (await fetch(`${api}/surveys/templates`, { method: 'POST', headers: h, body: JSON.stringify({ name: 'E2E Sprachtest' }) })).json();
+		const v = t.versions[0].id;
+		await fetch(`${api}/surveys/versions/${v}/questions`, { method: 'POST', headers: h, body: JSON.stringify({ type: 'freitext', text: 'Was läuft gut?', mandatory: false }) });
+		return v;
+	}, API);
+	await page.goto(`/survey-builder/${vid}`);
+	await page.getByLabel('Sprache hinzufügen').selectOption('pl');
+	await expect(page.getByText('Übersetzung: Polski')).toBeVisible();
+	await expect(page.getByText(/von \d+ übersetzt/)).toBeVisible();
+	const first = page.getByPlaceholder('Polski: Fragetext').first();
+	await first.fill('Mój przełożony jasno komunikuje oczekiwania.');
+	await first.blur();
+	await page.getByRole('tab', { name: /Deutsch/ }).click();
+	await page.getByRole('tab', { name: 'Polski' }).click();
+	await expect(page.getByPlaceholder('Polski: Fragetext').first()).toHaveValue('Mój przełożony jasno komunikuje oczekiwania.');
+	await page.screenshot({ path: 'e2e/screens/editor-uebersetzung.png' });
+
+	// Nutzer: eigene Sprache
+	await loginAs(page, 'P01900', '/dashboard');
+	await page.getByRole('button', { name: /Uma Koch/ }).click();
+	const sel = page.getByLabel('Sprache der Umfragen');
+	await expect(sel).toBeVisible();
+	await sel.selectOption('en');
+	await expect(page.getByText('✓ gespeichert')).toBeVisible();
+	await sel.selectOption('de');
+});

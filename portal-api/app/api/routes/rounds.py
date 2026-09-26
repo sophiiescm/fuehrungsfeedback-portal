@@ -13,7 +13,7 @@ from app.models.survey import SurveyVersion
 from app.schemas.round import RoundCreateIn, RoundDashboardOut, RoundOut, RoundTargetOut
 from app.services import pdf_letters, round_automation
 from app.services.round_lifecycle import (
-    RoundLifecycleError, close_round, preview_recipients, send_reminders_now, start_round,
+    RoundLifecycleError, close_round, send_reminders_now, start_round,
 )
 
 def _view_ok(path: str) -> bool:
@@ -96,11 +96,6 @@ def org_sync(db: Session = Depends(get_db)) -> dict:
     if summary is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Keine SAP-Quelle eingerichtet (Organisation → Import-Zeitplan)")
     return {"summary": summary}
-
-
-@router.get("/preview")
-def recipients_preview(fachbereiche: str | None = None, db: Session = Depends(get_db)) -> dict:
-    return preview_recipients(db, [f for f in fachbereiche.split(",") if f] if fachbereiche else None)
 
 
 @router.post("", response_model=RoundOut)

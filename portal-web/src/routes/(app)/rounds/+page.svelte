@@ -9,12 +9,6 @@
 	import { surveysApi, type SurveyTemplate } from '$lib/api/surveys';
 	import { organisationApi } from '$lib/api/organisation';
 
-	interface Preview {
-		total: Record<string, number>;
-		by_fachbereich: Record<string, Record<string, number>>;
-		excluded: { leader: string; fachbereich: string; team_size: number }[];
-	}
-
 	let rounds = $state<Round[]>([]);
 	let templates = $state<SurveyTemplate[]>([]);
 	let fachbereiche = $state<string[]>([]);
@@ -47,13 +41,10 @@
 	let selectedFb = $state<string[]>([]); // leer = alle
 	let channel = $state('portal');
 	let name = $state('');
-	let preview = $state<Preview | null>(null);
+	let repeat = $state(0); // 0 = einmalig, sonst Wiederholung alle n Monate (automatische Runde)
 	let startNow = $state(false);
-	let orgStatus = $state<{ last_import: { finished_at: string | null; triggered_by: string } | null; source_configured: boolean; source: string } | null>(null);
-	let syncing = $state(false);
-	let syncMsg = $state('');
 
-	const STEPS = ['Fragebogen', 'Zeitraum', 'Empfänger', 'Bestätigen'];
+	const STEPS = ['Fragebogen', 'Zeitraum', 'Bestätigen'];
 	const pad = (n: number) => String(n).padStart(2, '0');
 	const local = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
@@ -104,28 +95,8 @@
 		e.setDate(e.getDate() + days);
 		end = local(e);
 	}
-	async function syncSap() {
-		syncing = true;
-		syncMsg = '';
-		try {
-			await api.post('/rounds/org-sync');
-			syncMsg = 'Teams wurden aus SAP aktualisiert.';
-		} catch (e) {
-			syncMsg = e instanceof Error ? e.message : 'Aktualisierung fehlgeschlagen';
-		} finally {
-			syncing = false;
-			await loadPreview();
-		}
-	}
-	async function loadPreview() {
-		orgStatus = await api.get('/rounds/org-status');
-		const q = selectedFb.length ? `?fachbereiche=${encodeURIComponent(selectedFb.join(','))}` : '';
-		preview = await api.get<Preview>(`/rounds/preview${q}`);
-	}
-	async function next() {
-		if (step === 2) await loadPreview();
+	function next() {
 		step += 1;
-		if (step === 3) await loadPreview();
 	}
 	const canNext = $derived(step === 1 ? !!versionId : step === 2 ? !!start && !!end && new Date(end) > new Date(start) : true);
 
@@ -154,8 +125,24 @@
 				reminder_days_before_end: reminders.split(',').map((x) => Number(x.trim())).filter(Boolean)
 			});
 			if (startNow) await roundsApi.start(r.id);
+			if (repeat > 0) {
+				const nextStart = new Date(start);
+				nextStart.setMonth(nextStart.getMonth() + repeat);
+				auto = await api.put<AutomationCfg>('/rounds/automation', {
+					enabled: true,
+					survey_version_id: versionId,
+					interval_months: repeat,
+					next_start: nextStart.toISOString().slice(0, 10),
+					duration_days: Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86400000)),
+					lead_days: 14,
+					name_pattern: 'Feedback-Runde {half}/{year}',
+					reminder_days_before_end: reminders.split(',').map((x) => Number(x.trim())).filter(Boolean),
+					report_channel: channel,
+					target_fachbereiche: selectedFb.length ? selectedFb : null
+				});
+			}
 			wizard = false;
-			info = startNow ? 'Runde gestartet – Einladungen sind raus.' : 'Runde geplant. Sie startet automatisch zum Startzeitpunkt.';
+			info = (startNow ? 'Runde gestartet – Einladungen sind raus.' : 'Runde geplant. Sie startet automatisch zum Startzeitpunkt.') + (repeat > 0 ? ` Danach wiederholt sie sich automatisch (${intervalLabel(repeat)}).` : '');
 		});
 	async function showDashboard(id: number) {
 		dashboards[id] = await roundsApi.dashboard(id);
@@ -230,48 +217,39 @@
 				{#each [14, 21, 28] as d}<button class="rounded-full px-3 py-1.5" style="background: var(--surface-glass-strong); color: var(--text-primary)" onclick={() => setDuration(d)}>{d / 7} Wochen</button>{/each}
 			</div>
 			<label class="mt-3 block text-sm" style="color: var(--text-secondary)">Erinnerungen (Tage vor Ende, kommagetrennt)<input bind:value={reminders} class="glass-surface mt-1 w-full rounded px-3 py-2" /></label>
-		{:else if step === 3}
-			<p class="mb-2 font-semibold" style="color: var(--text-primary)">Wer wird bewertet und wer eingeladen?</p>
-			<p class="mb-2 text-xs" style="color: var(--text-muted)">Optional auf Fachbereiche einschränken (nichts gewählt = alle).</p>
-			<div class="mb-3 flex flex-wrap gap-2">
-				{#each fachbereiche as f (f)}
-					<button aria-pressed={selectedFb.includes(f)} class="rounded-full px-3 py-1.5 text-sm" style="background: {selectedFb.includes(f) ? 'var(--accent)' : 'var(--surface-glass-strong)'}; color: {selectedFb.includes(f) ? 'var(--accent-contrast)' : 'var(--text-primary)'}"
-						onclick={async () => { selectedFb = selectedFb.includes(f) ? selectedFb.filter((x) => x !== f) : [...selectedFb, f]; await loadPreview(); }}>{f}</button>
-				{/each}
-			</div>
-			<div class="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] p-3 text-sm" style="background: var(--surface-glass-strong); color: var(--text-secondary)">
-				<span class="flex-1">
-					🔄 Teams kommen automatisch aus SAP.
-					{#if orgStatus?.last_import?.finished_at}Letzter Stand: {orgStatus.last_import.finished_at.slice(0, 16).replace('T', ' ')} Uhr.{:else}Noch kein Import.{/if}
-					{#if orgStatus && !orgStatus.source_configured}<br /><span style="color: var(--warning)">Keine SAP-Quelle eingerichtet – es gilt der zuletzt importierte Stand (Organisation → Import).</span>{/if}
-					Beim Start der Runde wird der Stand automatisch nochmals abgeglichen.
-				</span>
-				{#if orgStatus?.source_configured}<Button variant="secondary" onclick={syncSap} disabled={syncing}>{syncing ? 'Aktualisiere…' : 'Jetzt aus SAP aktualisieren'}</Button>{/if}
-			</div>
-			{#if syncMsg}<p class="mb-2 text-xs" style="color: var(--text-secondary)">{syncMsg}</p>{/if}
-			{#if preview}
-				<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-					{#each [['Führungskräfte', preview.total.leaders], ['Einladungen', preview.total.recipients], ['ohne E-Mail', preview.total.without_email], ['nicht auswertbar', preview.total.excluded_leaders]] as [l, v]}
-						<div class="rounded-[var(--radius-md)] p-3 text-center" style="background: var(--surface-glass-strong)"><div class="text-2xl font-bold" style="color: var(--text-primary)">{v}</div><div class="text-xs" style="color: var(--text-secondary)">{l}</div></div>
-					{/each}
-				</div>
-				<p class="mt-2 text-xs" style="color: var(--text-muted)">„Nicht auswertbar“ = Team kleiner als 3 (Anonymität). Personen ohne E-Mail erhalten einen Code-Brief.</p>
-			{/if}
 		{:else}
 			<p class="mb-2 font-semibold" style="color: var(--text-primary)">Alles bereit?</p>
 			<label class="block text-sm" style="color: var(--text-secondary)">Name der Runde<input bind:value={name} class="glass-surface mt-1 w-full rounded px-3 py-2" /></label>
+			<label class="mt-3 block text-sm" style="color: var(--text-secondary)">Wiederholung
+				<select bind:value={repeat} class="glass-surface mt-1 w-full rounded px-3 py-2">
+					<option value={0}>Einmalig</option>
+					<option value={3}>🔁 Automatisch – vierteljährlich</option>
+					<option value={6}>🔁 Automatisch – halbjährlich</option>
+					<option value={12}>🔁 Automatisch – jährlich</option>
+				</select>
+			</label>
+			{#if repeat > 0}<p class="mt-1 text-xs" style="color: var(--text-muted)">Danach legt das Portal die nächsten Runden selbst an und startet sie zum Termin. Änderbar über das „Automatik“-Banner.</p>{/if}
 			<label class="mt-3 block text-sm" style="color: var(--text-secondary)">Reports an Führungskräfte
 				<select bind:value={channel} class="glass-surface mt-1 w-full rounded px-3 py-2"><option value="portal">im Portal</option><option value="email">per E-Mail</option><option value="beides">beides</option></select>
 			</label>
+			<details class="mt-3 text-sm" style="color: var(--text-secondary)">
+				<summary class="cursor-pointer py-1">Auf Fachbereiche einschränken {selectedFb.length ? `(${selectedFb.length} gewählt)` : '(alle)'}</summary>
+				<div class="mt-2 flex flex-wrap gap-2">
+					{#each fachbereiche as f (f)}
+						<button aria-pressed={selectedFb.includes(f)} class="rounded-full px-3 py-1.5 text-sm" style="background: {selectedFb.includes(f) ? 'var(--accent)' : 'var(--surface-glass-strong)'}; color: {selectedFb.includes(f) ? 'var(--accent-contrast)' : 'var(--text-primary)'}"
+							onclick={() => (selectedFb = selectedFb.includes(f) ? selectedFb.filter((x) => x !== f) : [...selectedFb, f])}>{f}</button>
+					{/each}
+				</div>
+			</details>
 			<label class="mt-3 flex items-center gap-2 text-sm" style="color: var(--text-primary)"><input type="checkbox" bind:checked={startNow} /> Sofort starten (Einladungen jetzt versenden)</label>
-			<p class="mt-3 text-sm" style="color: var(--text-secondary)">
-				{start.replace('T', ' ')} bis {end.replace('T', ' ')} · {preview?.total.leaders ?? 0} Führungskräfte · {preview?.total.recipients ?? 0} Einladungen
+			<p class="mt-3 text-xs" style="color: var(--text-muted)">
+				{start.replace('T', ' ')} bis {end.replace('T', ' ')} · Teams kommen automatisch aus SAP (Stand wird beim Start abgeglichen); Teams unter 3 Personen werden nicht befragt.
 			</p>
 		{/if}
 
 		<div class="mt-5 flex justify-between gap-2">
 			<Button variant="secondary" onclick={() => (step === 1 ? (wizard = false) : (step -= 1))}>{step === 1 ? 'Abbrechen' : 'Zurück'}</Button>
-			{#if step < 4}<Button onclick={next} disabled={!canNext}>Weiter</Button>{:else}<Button onclick={create} disabled={busy || !name}>{startNow ? 'Runde starten' : 'Runde planen'}</Button>{/if}
+			{#if step < 3}<Button onclick={next} disabled={!canNext}>Weiter</Button>{:else}<Button onclick={create} disabled={busy || !name}>{startNow ? 'Runde starten' : 'Runde planen'}</Button>{/if}
 		</div>
 </Modal>
 

@@ -88,8 +88,9 @@ test('Admin: Runden-Assistent führt in 4 Schritten durch die Planung', async ({
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await expect(page.getByText('Wann soll die Runde laufen?')).toBeVisible();
 	await page.getByRole('button', { name: 'Weiter' }).click();
-	await expect(page.getByText('Wer wird bewertet und wer eingeladen?')).toBeVisible();
-	await expect(page.getByText('Führungskräfte', { exact: true })).toBeVisible();
+	await expect(page.getByText('Alles bereit?')).toBeVisible();
+	await expect(page.getByLabel('Wiederholung')).toBeVisible();
+	await expect(page.getByText(/Empfänger|Vorschau/)).toHaveCount(0);
 	await page.screenshot({ path: 'e2e/screens/phone-runden-assistent.png' });
 });
 

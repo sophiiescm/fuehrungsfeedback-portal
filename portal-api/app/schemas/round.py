@@ -58,3 +58,4 @@ class MyFeedbackOut(BaseModel):
     completed_date: str | None
     survey_id: int | None = None
     round_closed: bool = False
+    languages: list[str] = []

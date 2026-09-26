@@ -40,6 +40,7 @@ export interface MyFeedback {
 	completed_date: string | null;
 	survey_id: number | null;
 	round_closed: boolean;
+	languages: string[];
 }
 export interface Notification {
 	id: number;

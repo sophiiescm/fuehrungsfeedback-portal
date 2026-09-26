@@ -7,6 +7,7 @@ export interface Dimension {
 	id: number;
 	name: string;
 	sort_order: number;
+	translations: Record<string, { name?: string }> | null;
 }
 
 export interface Question {
@@ -27,6 +28,16 @@ export interface Question {
 	show_if_question_id: number | null;
 	show_if_operator: string | null;
 	show_if_value: string | null;
+	translations: Record<string, QuestionTranslation> | null;
+}
+
+export interface QuestionTranslation {
+	text?: string;
+	help_text?: string;
+	options?: string[];
+	scale_labels?: string[];
+	pole_label_min?: string;
+	pole_label_max?: string;
 }
 
 export interface SurveyVersionSummary {
@@ -49,6 +60,7 @@ export interface SurveyVersionDetail {
 	version_number: number;
 	status: SurveyVersionStatus;
 	limesurvey_template_sid: number | null;
+	languages: string[];
 	dimensions: Dimension[];
 	questions: Question[];
 }
@@ -86,6 +98,14 @@ export const surveysApi = {
 	reorder: (versionId: number, questions: { id: number; dimension_id: number | null; sort_order: number }[]) =>
 		api.put<SurveyVersionDetail>(`/surveys/versions/${versionId}/reorder`, { questions }),
 	clone: (versionId: number) => api.post<SurveyVersionDetail>(`/surveys/versions/${versionId}/clone`),
+	setLanguages: (versionId: number, languages: string[]) =>
+		api.put<{ languages: string[] }>(`/surveys/versions/${versionId}/languages`, { languages }),
+	setQuestionTranslation: (id: number, lang: string, body: QuestionTranslation) =>
+		api.put(`/surveys/questions/${id}/translations/${lang}`, body),
+	setDimensionTranslation: (id: number, lang: string, name: string) =>
+		api.put(`/surveys/dimensions/${id}/translations/${lang}`, { name }),
+	autoTranslate: (versionId: number, lang: string) =>
+		api.post<{ translated: number }>(`/surveys/versions/${versionId}/translate?lang=${lang}`),
 	transfer: (versionId: number) =>
 		api.post<{ limesurvey_template_sid: number }>(`/surveys/versions/${versionId}/transfer`)
 };

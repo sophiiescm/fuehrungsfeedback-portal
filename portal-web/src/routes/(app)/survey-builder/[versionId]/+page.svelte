@@ -10,7 +10,8 @@
 		type Question,
 		type QuestionType
 	} from '$lib/api/surveys';
-	import { ApiError } from '$lib/api/client';
+	import { api, ApiError } from '$lib/api/client';
+	import SurveyTranslations from '$lib/components/SurveyTranslations.svelte';
 
 	const versionId = $derived(Number(page.params.versionId));
 
@@ -21,6 +22,42 @@
 	let draggedQuestionId = $state<number | null>(null);
 	let transferring = $state(false);
 	let transferMessage = $state('');
+
+	// --- Sprachen ---
+	let lang = $state('de');
+	let catalog = $state<{ code: string; name: string }[]>([]);
+	let addLang = $state('');
+	onMount(async () => {
+		try {
+			catalog = (await api.get<{ catalog: { code: string; name: string }[] }>('/languages')).catalog;
+		} catch {
+			catalog = [];
+		}
+	});
+	const langName = (c: string) => catalog.find((x) => x.code === c)?.name ?? c;
+	const langsOff = $derived(catalog.filter((c) => c.code !== 'de' && !(detail?.languages ?? []).includes(c.code)));
+	async function addLanguage() {
+		if (!detail || !addLang) return;
+		error = '';
+		try {
+			await surveysApi.setLanguages(detail.id, [...detail.languages, addLang]);
+			lang = addLang;
+			addLang = '';
+			await load();
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'Sprache konnte nicht hinzugefügt werden';
+		}
+	}
+	async function removeLanguage(code: string) {
+		if (!detail || !confirm(`${langName(code)} aus dem Fragebogen entfernen? Bereits erfasste Übersetzungen bleiben gespeichert.`)) return;
+		try {
+			await surveysApi.setLanguages(detail.id, detail.languages.filter((c) => c !== code));
+			if (lang === code) lang = 'de';
+			await load();
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'Fehler';
+		}
+	}
 
 	const TYPE_LABELS: Record<QuestionType, string> = {
 		likert: 'Likert-Skala',
@@ -402,6 +439,23 @@
 		</Card>
 	{/if}
 
+	<!-- Sprachen des Fragebogens -->
+	<div class="langbar mb-4" role="tablist" aria-label="Sprache des Fragebogens">
+		<button role="tab" aria-selected={lang === 'de'} class:on={lang === 'de'} onclick={() => (lang = 'de')}>Deutsch <small>Standard</small></button>
+		{#each detail.languages as c (c)}
+			<button role="tab" aria-selected={lang === c} class:on={lang === c} onclick={() => (lang = c)}>{langName(c)}</button>
+		{/each}
+		{#if !isLocked && langsOff.length}
+			<select class="add" bind:value={addLang} onchange={addLanguage} aria-label="Sprache hinzufügen">
+				<option value="">+ Sprache</option>
+				{#each langsOff as c (c.code)}<option value={c.code}>{c.name}</option>{/each}
+			</select>
+		{/if}
+	</div>
+	{#if lang !== 'de'}
+		<SurveyTranslations {detail} {lang} langName={langName(lang)} editable={!isLocked} onchanged={load} />
+		{#if !isLocked}<button class="mt-3 text-xs" style="color: var(--danger)" onclick={() => removeLanguage(lang)}>{langName(lang)} aus diesem Fragebogen entfernen</button>{/if}
+	{:else}
 	<div class="flex flex-col gap-4">
 		{#each [...detail.dimensions].sort((a, b) => a.sort_order - b.sort_order) as dim (dim.id)}
 			<Card>
@@ -440,8 +494,43 @@
 			</Card>
 		{/if}
 	</div>
+	{/if}
 {:else if error}
 	<Card><p style="color: var(--danger)">{error}</p></Card>
 {:else}
 	<p style="color: var(--text-secondary)">Lädt…</p>
 {/if}
+
+<style>
+	.langbar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		padding: 0.3rem;
+		border-radius: 999px;
+		background: var(--surface-glass-strong);
+		border: 1px solid var(--border-subtle);
+	}
+	.langbar button,
+	.langbar .add {
+		min-height: 40px;
+		padding: 0 1rem;
+		border-radius: 999px;
+		font-size: 0.85rem;
+		color: var(--text-secondary);
+		background: transparent;
+	}
+	.langbar button.on {
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font-weight: 600;
+	}
+	.langbar small {
+		opacity: 0.7;
+		font-size: 0.7rem;
+	}
+	.langbar .add {
+		color: var(--accent);
+		border: 1px dashed var(--accent);
+	}
+</style>

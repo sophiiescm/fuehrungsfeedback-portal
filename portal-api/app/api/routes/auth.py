@@ -43,6 +43,7 @@ class MeOut(BaseModel):
     email: str | None
     roles: list[str]
     permissions: list[str] = []
+    language: str = "de"
 
 
 def _require_dev_env() -> None:
@@ -87,6 +88,7 @@ def me(current_user: CurrentUser = Depends(get_current_user), db: Session = Depe
         email=current_user.person.email,
         roles=[r.value for r in current_user.roles],
         permissions=sorted(get_permissions(db, current_user.person)),
+        language=current_user.person.language or "de",
     )
 
 

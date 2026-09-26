@@ -3,6 +3,7 @@
 	import { auth, type Role } from '$lib/stores/auth.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import DevSwitcher from './DevSwitcher.svelte';
+	import LanguagePicker from './LanguagePicker.svelte';
 
 	interface MenuItem {
 		href: string;
@@ -88,7 +89,7 @@
 				{@render icon(item.icon)}<span>{item.label}</span>
 			</a>
 		{/each}
-		<div class="mt-2 border-t pt-3" style="border-color: var(--border-subtle)"><DevSwitcher /></div>
+		<div class="mt-2 flex flex-col gap-3 border-t pt-3" style="border-color: var(--border-subtle)"><LanguagePicker /><DevSwitcher /></div>
 		<div class="mt-2 flex items-center justify-between border-t pt-3" style="border-color: var(--border-subtle)">
 			<ThemeToggle />
 			<button onclick={() => auth.logout()} class="px-3 py-2 text-sm" style="color: var(--text-secondary)">Abmelden</button>

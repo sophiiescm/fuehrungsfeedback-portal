@@ -48,18 +48,6 @@ def test_automation_endpoints(client, seeded_users, db_session):
     assert ok.status_code == 200 and ok.json()["next_start"] == "2026-10-01"
 
 
-def test_recipient_preview(client, seeded_users, db_session):
-    from app.models.person import Person
-    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
-    lead = seeded_users["leader"]
-    for i in range(3):
-        db_session.add(Person(personalnummer=f"X{i}", vorname="A", nachname=f"B{i}", email=None if i == 0 else "a@example.test",
-                              org_unit_id=lead.org_unit_id, manager_personalnummer=lead.personalnummer))
-    db_session.commit()
-    r = client.get("/rounds/preview", headers=h).json()
-    assert r["total"]["leaders"] == 1 and r["total"]["recipients"] == 3 and r["total"]["without_email"] == 1
-
-
 def test_manual_reminder_and_exports_require_admin_and_work(client, seeded_users, db_session):
     h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
     v = _version(db_session)

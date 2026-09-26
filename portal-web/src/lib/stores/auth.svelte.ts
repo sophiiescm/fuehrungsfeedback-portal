@@ -8,6 +8,7 @@ export interface CurrentUser {
 	email: string | null;
 	roles: Role[];
 	permissions?: string[];
+	language?: string;
 }
 
 const STORAGE_KEY = 'ffp_token';
