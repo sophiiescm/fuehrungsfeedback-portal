@@ -32,11 +32,15 @@
 	onMount(async () => {
 		rounds = await roundsApi.list();
 		fachbereiche = await organisationApi.listFachbereiche();
-		selected = fachbereiche.slice(0, 2);
 		roundId = rounds.find((r) => r.status === 'berichtet' || r.status === 'ausgewertet')?.id ?? rounds[0]?.id ?? null;
 		const ref = await api.get<{ value: number | null; label: string }>('/nps/reference');
 		refValue = ref.value?.toString() ?? '';
 		refLabel = ref.label ?? '';
+		if (roundId) {
+			const b = await api.get<Bench>(`/benchmark?round_id=${roundId}`);
+			const usable = fachbereiche.filter((f) => b[f] && !b[f].suppressed);
+			selected = (usable.length ? usable : fachbereiche).slice(0, 2);
+		}
 		await load();
 	});
 

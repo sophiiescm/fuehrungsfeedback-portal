@@ -60,3 +60,13 @@ docker compose up -d --build
 # Portal http://localhost:5173  |  Mailpit http://localhost:8025  |  LimeSurvey http://localhost:8080
 ```
 Test-Logins und Seed-Reihenfolge: `docs/INSTALLATION.md` Abschnitt 2–3. Bedienung: `docs/BEDIENUNG.md`.
+
+## Nachtrag: Umsetzung der Fachseiten-Wünsche (nach Demo)
+Fertig und getestet (93 Backend-Tests, `npm run check` sauber):
+- **Reports/Auswertung:** überarbeitete Report-Seite (PDF-Button oben rechts), Wortwolke, Themen-Kategorien, NPS, Vergleichsgruppen frei wählbar, Balken-/Ampel-Ansicht, NPS-Referenzwert manuell pflegbar, PDF enthält NPS/Auswahl/Themen.
+- **Umfrage-Editor:** Likert, NPS, Einfach-/Mehrfachauswahl, mehrere Freitextfelder, Hilfetexte, Verzweigungen.
+- **Runden-Automatisierung:** wiederkehrende Runden (z. B. halbjährlich) im Admin-UI „Befragungsrunden"; Empfänger-Vorschau.
+- **Anmeldung:** Trusted-App-SSO (`/sso#assertion=…`), Entra-ID-OIDC-Flow (`/auth/callback`), Code-Brief als Fallback.
+- **Anbindungen:** `ODataOrgSource` (SuccessFactors) nutzbar im nächtlichen Import, Outlook/Exchange-SMTP (STARTTLS+Login).
+Nur gegen Mocks getestet (echte Systeme fehlen): Entra ID, SuccessFactors, Exchange Online, KI-Kategorisierung – siehe `OPEN_QUESTIONS.md`.
+Bekannt: `tests/test_rounds.py::test_leader_code_is_not_derived_from_personalnummer` ist selten flaky (Zufallscode). Demo-Daten wurden nicht neu gesät; für NPS/Auswahl-Demo `docker compose down -v` und Seed neu ausführen.
