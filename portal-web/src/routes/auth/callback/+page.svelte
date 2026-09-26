@@ -13,7 +13,7 @@
 				state: p.get('state') ?? ''
 			});
 			auth.setToken(r.access_token);
-			await goto('/dashboard');
+			await goto('/dashboard', { replaceState: true });
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'SSO-Anmeldung fehlgeschlagen';
 		}

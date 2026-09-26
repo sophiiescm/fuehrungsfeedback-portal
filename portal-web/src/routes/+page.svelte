@@ -4,6 +4,6 @@
 	import { auth } from '$lib/stores/auth.svelte';
 
 	onMount(() => {
-		goto(auth.token ? '/dashboard' : '/login');
+		goto(auth.token ? '/dashboard' : '/login', { replaceState: true });
 	});
 </script>

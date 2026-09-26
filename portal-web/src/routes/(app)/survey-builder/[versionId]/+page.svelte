@@ -194,7 +194,7 @@
 	async function cloneVersion() {
 		if (!detail) return;
 		const clone = await surveysApi.clone(detail.id);
-		await goto(`/survey-builder/${clone.id}`);
+		await goto(`/survey-builder/${clone.id}`, { replaceState: true });
 	}
 	async function transfer() {
 		if (!detail) return;
@@ -373,6 +373,7 @@
 {/snippet}
 
 {#if detail}
+	<a href="/survey-builder" class="mb-3 inline-block text-sm" style="color: var(--accent)">‹ Alle Umfragen</a>
 	<div class="mb-6 flex flex-wrap items-center justify-between gap-2">
 		<div>
 			<h1 class="text-2xl font-bold" style="color: var(--text-primary)">{detail.survey_template_name}</h1>

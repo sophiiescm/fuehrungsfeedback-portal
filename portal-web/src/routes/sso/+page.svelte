@@ -17,7 +17,7 @@
 		try {
 			const r = await api.post<{ access_token: string }>('/auth/app-sso', { assertion });
 			auth.setToken(r.access_token);
-			await goto('/feedbacks');
+			await goto('/feedbacks', { replaceState: true });
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'Anmeldung fehlgeschlagen';
 		}

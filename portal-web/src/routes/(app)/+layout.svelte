@@ -29,7 +29,7 @@
 	$effect(() => {
 		if (!browser) return;
 		if (!auth.token) {
-			goto('/login');
+			goto('/login', { replaceState: true });
 			return;
 		}
 		if (!auth.user) {
@@ -39,7 +39,7 @@
 					if (me) auth.setUser(me);
 					loading = false;
 				})
-				.catch(() => goto('/login'));
+				.catch(() => goto('/login', { replaceState: true }));
 		} else {
 			loading = false;
 		}

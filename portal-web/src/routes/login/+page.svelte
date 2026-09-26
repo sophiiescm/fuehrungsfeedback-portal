@@ -21,6 +21,10 @@
 	let error = $state('');
 
 	onMount(async () => {
+		if (auth.token) {
+			await goto('/dashboard', { replaceState: true });
+			return;
+		}
 		try {
 			personas = await api.get<Persona[]>('/dev/personas');
 			devUsers = await api.get<DevUser[]>('/auth/dev-login/users');
@@ -37,7 +41,7 @@
 				personalnummer: pnr
 			});
 			auth.setToken(result.access_token);
-			await goto('/dashboard');
+			await goto('/dashboard', { replaceState: true });
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'Anmeldung fehlgeschlagen';
 		}
@@ -53,7 +57,7 @@
 			});
 			auth.setToken(result.access_token);
 			auth.setKiosk(true);
-			await goto('/feedbacks');
+			await goto('/feedbacks', { replaceState: true });
 		} catch (e) {
 			error = e instanceof ApiError ? e.message : 'Anmeldung fehlgeschlagen';
 		}
