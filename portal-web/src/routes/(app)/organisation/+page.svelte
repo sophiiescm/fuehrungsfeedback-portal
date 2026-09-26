@@ -213,7 +213,7 @@
 					<div class="text-xs" style="color: var(--text-muted)">Neu</div>
 				</div>
 				<div class="glass-surface p-3 text-center">
-					<div class="text-2xl font-bold" style="color: var(--accent)">{diff.changed.length}</div>
+					<div class="text-2xl font-bold" style="color: var(--accent-text)">{diff.changed.length}</div>
 					<div class="text-xs" style="color: var(--text-muted)">Geändert</div>
 				</div>
 				<div class="glass-surface p-3 text-center">

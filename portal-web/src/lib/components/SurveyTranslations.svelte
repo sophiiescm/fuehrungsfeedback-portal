@@ -169,7 +169,7 @@
 		border-radius: var(--radius-sm);
 		background: var(--surface-glass-strong);
 		border: 1px solid var(--border-subtle);
-		color: var(--accent);
+		color: var(--accent-text);
 		font-size: 0.85rem;
 		font-weight: 600;
 	}

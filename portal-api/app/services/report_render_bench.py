@@ -29,7 +29,7 @@ def benchmark_xlsx(dims: list[str], rows: list[list], accent: str) -> bytes:
     ws.title = "Benchmark"
     ws.append(["Fachbereich", "Führungskräfte"] + dims)
     for c in ws[1]:
-        c.font, c.fill = Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor=accent.lstrip("#").upper())
+        c.font, c.fill = Font(bold=True, color="10231A"), PatternFill("solid", fgColor=accent.lstrip("#").upper())
     for r in rows:
         ws.append(r)
     ws.column_dimensions["A"].width = 24
@@ -46,6 +46,9 @@ def benchmark_pptx(round_name: str, dims: list[str], rows: list[list], accent: s
     from pptx.util import Inches, Pt
 
     acc = RGBColor.from_string(accent.lstrip("#").upper())
+    from app.services.report_render import darken
+
+    acc_text = RGBColor.from_string(darken(accent).lstrip("#").upper())
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
     s = prs.slides.add_slide(prs.slide_layouts[6])
@@ -56,13 +59,13 @@ def benchmark_pptx(round_name: str, dims: list[str], rows: list[list], accent: s
     tb = s.shapes.add_textbox(Inches(0.8), Inches(2.6), Inches(11.5), Inches(2))
     tb.text_frame.text = f"Benchmark: {round_name}"
     p = tb.text_frame.paragraphs[0]
-    p.font.size, p.font.bold, p.font.color.rgb = Pt(40), True, RGBColor(255, 255, 255)
+    p.font.size, p.font.bold, p.font.color.rgb = Pt(40), True, RGBColor(0x17, 0x24, 0x1B)
     if rows and dims:
         s = prs.slides.add_slide(prs.slide_layouts[6])
         t = s.shapes.add_textbox(Inches(0.6), Inches(0.3), Inches(12), Inches(0.9))
         t.text_frame.text = "Themen nach Fachbereich (Ø, Skala 1–5)"
         p = t.text_frame.paragraphs[0]
-        p.font.size, p.font.bold, p.font.color.rgb = Pt(28), True, acc
+        p.font.size, p.font.bold, p.font.color.rgb = Pt(28), True, acc_text
         cd = CategoryChartData()
         cd.categories = dims
         for r in rows:

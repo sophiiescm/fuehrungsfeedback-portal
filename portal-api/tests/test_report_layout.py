@@ -14,7 +14,7 @@ def test_normalize_drops_unknown_and_appends_missing():
     keys = [s["key"] for s in cfg["sections"]]
     assert keys[0] == "nps" and "boese" not in keys and keys.count("nps") == 1
     assert set(keys) == set(report_layout.SECTIONS)
-    assert cfg["accent"] == "#4f46e5"  # ungueltige Farbe -> Standard
+    assert cfg["accent"] == "#78ab78"  # ungueltige Farbe -> Standard
     assert cfg["sections"][0] == {"key": "nps", "enabled": False, "title": "Mein NPS"}
 
 

@@ -33,6 +33,6 @@
 		{:else if kiosk}
 			<p class="mt-3 text-sm" style="color: var(--text-muted)">Auf diesem Gemeinschaftsgerät wird aus Datenschutzgründen nichts gespeichert.</p>
 		{/if}
-		<a href="/feedbacks" class="mt-5 inline-block text-sm underline" style="color: var(--accent)">Weiter zu „Meine Feedbacks“</a>
+		<a href="/feedbacks" class="mt-5 inline-block text-sm underline" style="color: var(--accent-text)">Weiter zu „Meine Feedbacks“</a>
 	</div>
 </div>

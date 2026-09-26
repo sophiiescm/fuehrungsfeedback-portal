@@ -71,7 +71,7 @@
 		await load();
 	}
 	const current = $derived(rounds.find((r) => r.id === roundId));
-	const colors = ['#4f46e5', '#0891b2', '#d97706', '#16a34a', '#dc2626', '#7c3aed'];
+	const colors = ['#5a9a63', '#0891b2', '#d97706', '#16a34a', '#dc2626', '#7c3aed'];
 	const ampelColor = { gruen: 'var(--success)', gelb: 'var(--warning)', rot: 'var(--danger)' } as const;
 	const pct = (v: number) => `${(v / 5) * 100}%`;
 	const ref = $derived(cmp?.nps_reference?.value ?? null);

@@ -99,7 +99,7 @@
 
 <aside class="glass-surface fixed top-4 bottom-4 left-4 z-20 hidden w-[var(--sidebar-width)] flex-col justify-between p-4 lg:flex">
 	<div>
-		<div class="mb-6 px-2 text-lg font-bold" style="color: var(--text-primary)">Führungsfeedback</div>
+		<div class="mb-6 flex items-center gap-3 px-2 text-lg font-bold" style="color: var(--text-primary)"><span class="brand" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--accent-contrast)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z" /></svg></span>Führungsfeedback</div>
 		<nav class="flex flex-col gap-1" aria-label="Hauptnavigation">
 			{#each visibleItems as item (item.href)}
 				<a href={item.href} class="row" class:on={active(item.href)}>
@@ -115,6 +115,17 @@
 </aside>
 
 <style>
+	.brand {
+		display: inline-flex;
+		width: 2.25rem;
+		height: 2.25rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 12px;
+		background: var(--accent);
+		font-size: 1.1rem;
+		box-shadow: 0 4px 12px rgba(80, 130, 88, 0.35);
+	}
 	.topbar {
 		padding-top: env(safe-area-inset-top);
 		height: calc(3rem + env(safe-area-inset-top));
@@ -134,7 +145,7 @@
 		background: transparent;
 	}
 	.tab.on {
-		color: var(--accent);
+		color: var(--accent-text);
 		font-weight: 600;
 	}
 	.sheet {

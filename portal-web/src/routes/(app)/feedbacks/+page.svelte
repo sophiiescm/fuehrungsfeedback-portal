@@ -70,7 +70,7 @@
 		{#each open as f (f.participation_id)}
 			<div class="glass-surface fb-card p-4 sm:p-5">
 				<div>
-					<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent)">{f.round_name}</p>
+					<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent-text)">{f.round_name}</p>
 					<p class="text-lg font-semibold" style="color: var(--text-primary)">Feedback für {f.leader_name}</p>
 					<p class="text-sm" style="color: var(--text-secondary)">
 						Fällig bis {f.due_date}{#if days(f.due_date) <= 3 && days(f.due_date) >= 0} · <strong style="color: var(--warning)">nur noch {days(f.due_date)} Tage</strong>{/if} · ca. 5 Minuten
@@ -141,7 +141,7 @@
 			</div>
 			<div class="overflow-y-auto p-4 pt-2">
 				{#each groups(view.receipt) as g (g.name)}
-					<p class="mt-3 mb-1 text-sm font-semibold" style="color: var(--accent)">{g.name}</p>
+					<p class="mt-3 mb-1 text-sm font-semibold" style="color: var(--accent-text)">{g.name}</p>
 					{#each g.items as it}
 						<div class="mb-2 rounded-[var(--radius-sm)] p-3 text-sm" style="background: var(--surface-glass)">
 							<p style="color: var(--text-secondary)">{it.q}</p>
@@ -207,7 +207,7 @@
 		padding: 0 0.5rem;
 		font-size: 0.85rem;
 		font-weight: 600;
-		color: var(--accent);
+		color: var(--accent-text);
 	}
 	.tick {
 		display: inline-flex;

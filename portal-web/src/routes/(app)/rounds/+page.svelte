@@ -187,7 +187,7 @@
 {#if auto?.enabled && auto.next_start && !autoNextExists}
 	<div class="glass-surface mb-4 flex flex-wrap items-center gap-3 p-4" style="border: 1px dashed var(--accent)">
 		<div class="flex-1">
-			<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent)">🔁 Automatisch · geplant</p>
+			<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent-text)">🔁 Automatisch · geplant</p>
 			<p class="text-lg font-semibold" style="color: var(--text-primary)">Nächste Runde · Start {auto.next_start}</p>
 			<p class="text-sm" style="color: var(--text-secondary)">{auto.duration_days} Tage Laufzeit · Teams werden vor dem Start aus SAP aktualisiert</p>
 		</div>
@@ -338,7 +338,7 @@
 		color: var(--accent-contrast);
 		font-size: 2rem;
 		line-height: 1;
-		box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+		box-shadow: 0 8px 24px rgba(80, 130, 88, 0.45);
 	}
 	.fab span {
 		display: inline-block;

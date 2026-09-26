@@ -4,10 +4,12 @@
    Breite, iOS-Safe-Areas. Funktioniert auf Smartphone, iPad und Kiosk-PCs. */
 
 :root {
-  --pf-accent: #4f46e5;
-  --pf-accent-hover: #4338ca;
-  --pf-text: #1e2333;
-  --pf-text-2: #4b5266;
+  --pf-accent: #78ab78;
+  --pf-accent-hover: #679a67;
+  --pf-accent-text: #2f6b3a;
+  --pf-on-accent: #10231a;
+  --pf-text: #17241b;
+  --pf-text-2: #43524a;
   --pf-card: rgba(255, 255, 255, 0.92);
   --pf-border: rgba(30, 35, 51, 0.14);
   --pf-tile: #ffffff;
@@ -16,7 +18,7 @@
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  background: radial-gradient(circle at top left, #eef2ff, #e0f2fe 70%) fixed;
+  background: radial-gradient(circle at top left, #f1f7f1, #dfeee3 70%) fixed;
   color: var(--pf-text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 17px;
@@ -70,10 +72,10 @@ body {
 .answers-list .answer-item > label:hover { border-color: var(--pf-accent); }
 .answers-list .answer-item > input:checked + label {
   border-color: var(--pf-accent);
-  background: rgba(79, 70, 229, 0.12);
+  background: rgba(120, 171, 120, 0.22);
   font-weight: 600;
 }
-.answers-list .answer-item > input:focus-visible + label { outline: 3px solid rgba(79, 70, 229, 0.45); }
+.answers-list .answer-item > input:focus-visible + label { outline: 3px solid rgba(120, 171, 120, 0.6); }
 
 /* Skalen (Likert/NPS als Array): auf schmalen Bildschirmen umbrechen statt scrollen */
 .array-5-pt-choice .answers-list, .array-10-pt-choice .answers-list {
@@ -89,13 +91,13 @@ textarea, input[type="text"], input[type="number"], select {
   padding: 0.6rem 0.8rem;
 }
 textarea { min-height: 120px; }
-textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25) !important; outline: none; }
+textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !important; box-shadow: 0 0 0 3px rgba(120, 171, 120, 0.4) !important; outline: none; }
 
 /* Navigation: volle Breite, gross */
 .btn-primary, button.btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-previous-btn, .ls-move-submit-btn {
   background: var(--pf-accent) !important;
   border-color: var(--pf-accent) !important;
-  color: #fff !important;
+  color: var(--pf-on-accent) !important;
   border-radius: 12px;
   min-height: 52px;
   padding: 0.6rem 1.4rem;
@@ -103,9 +105,9 @@ textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !impo
   font-size: 1rem;
 }
 .btn-primary:hover { background: var(--pf-accent-hover) !important; }
-.ls-move-previous-btn { background: #fff !important; color: var(--pf-accent) !important; border: 2px solid var(--pf-accent) !important; }
+.ls-move-previous-btn { background: #fff !important; color: var(--pf-accent-text) !important; border: 2px solid var(--pf-accent) !important; }
 #navigator-container, .navigator { padding-bottom: 1rem; }
-a { color: var(--pf-accent); }
+a { color: var(--pf-accent-text); }
 
 /* Schmale Bildschirme (Handy) */
 @media (max-width: 767.98px) {
@@ -124,10 +126,10 @@ a { color: var(--pf-accent); }
 }
 
 @media (prefers-color-scheme: dark) {
-  :root { --pf-text: #f1f3fb; --pf-text-2: #c7cbdc; --pf-card: rgba(30, 34, 54, 0.94); --pf-border: rgba(255,255,255,0.22); --pf-tile: #262b47; --pf-accent: #818cf8; --pf-accent-hover: #a5b4fc; }
-  body { background: radial-gradient(circle at top left, #0f1222, #1a1f3a 70%) fixed; color: var(--pf-text); }
-  .btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-submit-btn { color: #0f1222 !important; }
-  textarea, input[type="text"], select { background: #262b47 !important; color: var(--pf-text) !important; }
+  :root { --pf-text: #eef5ef; --pf-text-2: #c3d1c7; --pf-card: rgba(26, 42, 32, 0.94); --pf-border: rgba(255,255,255,0.22); --pf-tile: #21362a; --pf-accent: #78ab78; --pf-accent-hover: #8fc08f; --pf-accent-text: #9fd0a0; }
+  body { background: radial-gradient(circle at top left, #0e1812, #182a1f 70%) fixed; color: var(--pf-text); }
+  .btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-submit-btn { color: #10231a !important; }
+  textarea, input[type="text"], select { background: #21362a !important; color: var(--pf-text) !important; }
   .ls-move-previous-btn { background: transparent !important; }
-  a { color: #a5b4fc; }
+  a { color: #9fd0a0; }
 }

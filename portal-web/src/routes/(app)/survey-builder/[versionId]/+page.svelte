@@ -294,7 +294,7 @@
 					<textarea disabled class="glass-surface mt-2 w-full rounded p-2 text-xs"></textarea>
 				{/if}
 				{#if q.show_if_question_id}
-					<p class="mt-1 text-[11px]" style="color: var(--accent)">
+					<p class="mt-1 text-[11px]" style="color: var(--accent-text)">
 						Wird nur angezeigt, wenn „{nameOf(q.show_if_question_id)}“ {OPERATORS[q.show_if_operator ?? 'eq']} {q.show_if_value}
 					</p>
 				{/if}
@@ -305,7 +305,7 @@
 					{#if q.type === 'choice'}{q.allow_multiple ? 'Mehrfachauswahl' : 'Einfachauswahl'}: {(q.options ?? []).join(' · ')}{/if}
 				</p>
 				{#if q.show_if_question_id}
-					<p class="text-[11px]" style="color: var(--accent)">
+					<p class="text-[11px]" style="color: var(--accent-text)">
 						↳ nur wenn „{nameOf(q.show_if_question_id)}“ {OPERATORS[q.show_if_operator ?? 'eq']} {q.show_if_value}
 					</p>
 				{/if}
@@ -369,7 +369,7 @@
 					</li>
 				{/each}
 			</ol>
-			<button onclick={() => form.options.push('')} class="self-start text-sm" style="color: var(--accent)">+ Option hinzufügen</button>
+			<button onclick={() => form.options.push('')} class="self-start text-sm" style="color: var(--accent-text)">+ Option hinzufügen</button>
 			<label class="flex items-center gap-2 text-xs" style="color: var(--text-secondary)">
 				<input type="checkbox" bind:checked={form.allowMultiple} /> Mehrfachantworten möglich
 			</label>
@@ -410,7 +410,7 @@
 {/snippet}
 
 {#if detail}
-	<a href="/survey-builder" class="mb-3 inline-block text-sm" style="color: var(--accent)">‹ Alle Umfragen</a>
+	<a href="/survey-builder" class="mb-3 inline-block text-sm" style="color: var(--accent-text)">‹ Alle Umfragen</a>
 	<div class="mb-6 flex flex-wrap items-center justify-between gap-2">
 		<div>
 			<h1 class="text-2xl font-bold" style="color: var(--text-primary)">{detail.survey_template_name}</h1>
@@ -468,7 +468,7 @@
 				</div>
 				{#if editable}
 					{#if addFormOpenFor === dim.id}{@render addForm()}{:else}
-						<button onclick={() => openAddForm(dim.id)} class="mt-3 text-sm" style="color: var(--accent)">+ Frage hinzufügen</button>
+						<button onclick={() => openAddForm(dim.id)} class="mt-3 text-sm" style="color: var(--accent-text)">+ Frage hinzufügen</button>
 					{/if}
 				{/if}
 			</Card>
@@ -480,7 +480,7 @@
 			</div>
 			{#if editable}
 				{#if addFormOpenFor === null}{@render addForm()}{:else}
-					<button onclick={() => openAddForm(null)} class="mt-3 text-sm" style="color: var(--accent)">+ Frage hinzufügen</button>
+					<button onclick={() => openAddForm(null)} class="mt-3 text-sm" style="color: var(--accent-text)">+ Frage hinzufügen</button>
 				{/if}
 			{/if}
 		</Card>
@@ -530,7 +530,7 @@
 		font-size: 0.7rem;
 	}
 	.langbar .add {
-		color: var(--accent);
+		color: var(--accent-text);
 		border: 1px dashed var(--accent);
 	}
 </style>

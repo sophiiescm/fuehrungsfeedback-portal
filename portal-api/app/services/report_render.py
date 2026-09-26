@@ -48,6 +48,13 @@ def choice_label(q: dict, key) -> str:
         return str(key)
 
 
+def darken(hex_color: str, factor: float = 0.4) -> str:
+    """Dunklere Variante fuer Text/Ueberschriften (helle Markenfarbe hat auf Weiss zu wenig Kontrast)."""
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return "#%02x%02x%02x" % (int(r * (1 - factor)), int(g * (1 - factor)), int(b * (1 - factor)))
+
+
 def prepare(detail: dict, layout: dict) -> dict:
     layout = normalize(layout)
     dims = detail.get("dimensions") or []
@@ -65,7 +72,7 @@ def prepare(detail: dict, layout: dict) -> dict:
             return t
 
     return {
-        "d": detail, "layout": layout, "title": fill(layout["title"]), "subtitle": fill(layout["subtitle"]),
+        "d": detail, "layout": layout, "accent_dark": darken(layout["accent"]), "title": fill(layout["title"]), "subtitle": fill(layout["subtitle"]),
         "overall": overall, "overall_prev": prev, "overall_company": comp,
         "strengths": ordered[:2], "growth": list(reversed(ordered))[:2], "dims": ordered,
         "sections": [s for s in layout["sections"] if s["enabled"] and _has_data(s["key"], detail)],
@@ -86,10 +93,10 @@ def _has_data(key: str, d: dict) -> bool:
 _HTML = """<html><head><meta charset="utf-8"><style>
 @page { size: A4; margin: 18mm 15mm 18mm 15mm; @bottom-center { content: "{{ layout.footer|e }} · Seite " counter(page); font-size: 8pt; color: #666; } }
 body{font-family:'DejaVu Sans',sans-serif;font-size:10pt;color:#1e2333}
-h1{color:{{ layout.accent }};font-size:20pt;margin:0 0 2mm}h2{color:{{ layout.accent }};font-size:13pt;border-bottom:1px solid {{ layout.accent }};padding-bottom:1mm;margin-top:8mm}
+h1{color:{{ accent_dark }};font-size:20pt;margin:0 0 2mm}h2{color:{{ accent_dark }};font-size:13pt;border-bottom:2px solid {{ layout.accent }};padding-bottom:1mm;margin-top:8mm}
 .sub{color:#555;margin:0 0 4mm}.intro{margin:3mm 0 4mm}
 table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:3px 5px;text-align:left;font-size:9pt}th{background:#f1f2f8}
-.bar{background:{{ layout.accent }};height:8px}.big{font-size:26pt;font-weight:bold;color:{{ layout.accent }}}
+.bar{background:{{ layout.accent }};height:8px}.big{font-size:26pt;font-weight:bold;color:{{ accent_dark }}}
 .good{color:#15803d}.bad{color:#b91c1c}.muted{color:#666;font-size:8.5pt}.cols{width:100%}.cols td{border:0;vertical-align:top;width:50%}
 .tag{display:inline-block;padding:1px 6px;margin:1px;border:1px solid #ccc;border-radius:8px;font-size:9pt}
 </style></head><body>
@@ -148,7 +155,8 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
 
     ctx = prepare(detail, layout)
     acc = RGBColor.from_string(ctx["layout"]["accent"].lstrip("#").upper())
-    dark = RGBColor(0x1E, 0x23, 0x33)
+    acc_text = RGBColor.from_string(ctx["accent_dark"].lstrip("#").upper())
+    dark = RGBColor(0x17, 0x24, 0x1B)
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
     blank = prs.slide_layouts[6]
@@ -169,7 +177,7 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
         bar.fill.solid()
         bar.fill.fore_color.rgb = acc
         bar.line.fill.background()
-        text(s, title, 0.6, 0.45, 12, 0.9, 30, True, acc)
+        text(s, title, 0.6, 0.45, 12, 0.9, 30, True, acc_text)
         text(s, ctx["layout"]["footer"], 0.6, 7.0, 12, 0.4, 10, False, RGBColor(0x66, 0x66, 0x66))
         return s
 
@@ -193,15 +201,15 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
     bg.fill.solid()
     bg.fill.fore_color.rgb = acc
     bg.line.fill.background()
-    text(s, ctx["title"], 0.8, 2.4, 11.5, 1.6, 40, True, RGBColor(255, 255, 255))
-    text(s, ctx["subtitle"] + (("\n" + ctx["layout"]["intro"]) if ctx["layout"]["intro"] else ""), 0.8, 4.2, 11.5, 1.5, 20, False, RGBColor(255, 255, 255))
+    text(s, ctx["title"], 0.8, 2.4, 11.5, 1.6, 40, True, dark)
+    text(s, ctx["subtitle"] + (("\n" + ctx["layout"]["intro"]) if ctx["layout"]["intro"] else ""), 0.8, 4.2, 11.5, 1.5, 20, False, dark)
 
     d, f = ctx["d"], _f
     for sec in ctx["sections"]:
         k, title = sec["key"], sec["title"]
         if k == "summary":
             s = new_slide(title)
-            text(s, f(ctx["overall"], 1), 0.8, 1.7, 4, 2, 90, True, acc)
+            text(s, f(ctx["overall"], 1), 0.8, 1.7, 4, 2, 90, True, acc_text)
             text(s, "von 5", 4.2, 3.0, 2, 0.8, 24)
             lines = []
             if ctx["overall_prev"] is not None:
@@ -248,7 +256,7 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
         elif k == "nps":
             s = new_slide(title)
             n = d["nps"]
-            text(s, str(n["score"]), 0.8, 1.7, 4, 2, 90, True, acc)
+            text(s, str(n["score"]), 0.8, 1.7, 4, 2, 90, True, acc_text)
             text(s, f"{n['promoters']} Fans · {n['passives']} Neutrale · {n['detractors']} Kritiker\n" + (f"Referenz „{d['nps_reference']['label']}“: {d['nps_reference']['value']}" if d.get("nps_reference") and d["nps_reference"].get("value") is not None else ""), 6, 2.2, 6.8, 3, 22)
         elif k == "choices":
             for q in [q for q in d.get("questions") or [] if q["type"] == "choice"]:
@@ -273,7 +281,7 @@ def build_pptx(detail: dict, layout: dict) -> bytes:
                     text(s, "\n".join("• " + t for t in texts[i:i + 6]), 0.8, 1.6, 11.8, 5, 18)
         elif k == "wordcloud":
             s = new_slide(title)
-            text(s, "  ·  ".join(f"{w['word']} ({w['count']})" for w in d.get("wordcloud") or []), 0.8, 1.8, 11.8, 4, 24, False, acc)
+            text(s, "  ·  ".join(f"{w['word']} ({w['count']})" for w in d.get("wordcloud") or []), 0.8, 1.8, 11.8, 4, 24, False, acc_text)
         elif k == "guide":
             s = new_slide(title)
             text(s, "Die Werte reichen von 1 (trifft gar nicht zu) bis 5 (trifft voll zu) und sind Durchschnitte aller Antworten.\nErgebnisse werden nur ab 3 Antworten gezeigt.\nFreitexte sind von Namen und Kontaktdaten bereinigt und nicht rückverfolgbar.", 0.8, 1.8, 11.8, 4, 22)
@@ -327,7 +335,7 @@ def build_xlsx(detail: dict, layout: dict) -> bytes:
         ws = wb.create_sheet(name[:31])
         ws.append(header)
         for c in ws[1]:
-            c.font, c.fill = Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor=acc)
+            c.font, c.fill = Font(bold=True, color="10231A"), PatternFill("solid", fgColor=acc)
         for r in rows:
             ws.append(r)
         for i, col in enumerate(ws.columns, start=1):

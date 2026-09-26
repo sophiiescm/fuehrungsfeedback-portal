@@ -93,7 +93,7 @@
 	// Ring: Wert 1..5 als Anteil
 	const R = 54;
 	const C = 2 * Math.PI * R;
-	const colors = ['#4f46e5', '#0891b2', '#16a34a', '#d97706', '#dc2626'];
+	const colors = ['#5a9a63', '#0891b2', '#16a34a', '#d97706', '#dc2626'];
 	const x = (i: number) => 40 + (trendRounds.length > 1 ? (i * 520) / (trendRounds.length - 1) : 260);
 	const y = (v: number) => 180 - ((v - 1) / 4) * 160;
 	const cloudSize = (c: number, max: number) => 0.85 + (c / max) * 1.6;
@@ -169,7 +169,7 @@
 					<text x="70" y="90" text-anchor="middle" font-size="11" fill="var(--text-secondary)">von 5</text>
 				</svg>
 				<div class="flex-1">
-					<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent)">{detail.round_name}</p>
+					<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent-text)">{detail.round_name}</p>
 					<p class="text-lg font-semibold" style="color: var(--text-primary)">
 						{#if overallCompany != null && overall != null}
 							{overall - overallCompany >= 0.2 ? 'Über dem Unternehmensschnitt' : overall - overallCompany <= -0.2 ? 'Unter dem Unternehmensschnitt' : 'Im Unternehmensschnitt'}
@@ -204,7 +204,7 @@
 							<span>{d.dimension}</span><b>{fmt(d.mean)}</b>
 						</button>
 					{/each}
-					<a href="/massnahmen" class="mt-2 inline-block text-sm" style="color: var(--accent)">→ Maßnahme daraus ableiten</a>
+					<a href="/massnahmen" class="mt-2 inline-block text-sm" style="color: var(--accent-text)">→ Maßnahme daraus ableiten</a>
 				</div>
 			</div>
 
@@ -316,7 +316,7 @@
 					<div class="flex flex-wrap items-center gap-x-4 gap-y-1" role="img" aria-label="Wörter aus den Freitexten">
 						{#each detail.wordcloud ?? [] as w (w.word)}
 							{@const max = detail.wordcloud?.[0].count ?? 1}
-							<span style="font-size:{cloudSize(w.count, max)}rem; color: var(--accent); opacity:{0.55 + (w.count / max) * 0.45}" title="{w.count} Antworten">{w.word}</span>
+							<span style="font-size:{cloudSize(w.count, max)}rem; color: var(--accent-text); opacity:{0.55 + (w.count / max) * 0.45}" title="{w.count} Antworten">{w.word}</span>
 						{:else}
 							<p class="text-sm" style="color: var(--text-secondary)">Noch keine Wörter, die in mindestens 3 verschiedenen Antworten vorkommen.</p>
 						{/each}

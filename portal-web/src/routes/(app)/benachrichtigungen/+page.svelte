@@ -31,7 +31,7 @@
 					<p class:font-bold={!n.read_at} style="color: var(--text-primary)">{n.title}</p>
 					<div class="text-sm" style="color: var(--text-secondary)">{@html n.body}</div>
 				</div>
-				{#if !n.read_at}<button class="text-xs" style="color: var(--accent)" onclick={() => markRead(n)}>Gelesen</button>{/if}
+				{#if !n.read_at}<button class="text-xs" style="color: var(--accent-text)" onclick={() => markRead(n)}>Gelesen</button>{/if}
 			</div>
 		</Card>
 	{:else}
