@@ -56,3 +56,5 @@ class MyFeedbackOut(BaseModel):
     due_date: str
     feedback_link: str | None
     completed_date: str | None
+    survey_id: int | None = None
+    round_closed: bool = False

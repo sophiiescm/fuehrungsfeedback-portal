@@ -80,6 +80,15 @@ def start_round(db: Session, round_: Round) -> dict:
 
     settings = get_settings()
 
+    # Teams aus SAP: vor dem Snapshot den aktuellen Stand aus der konfigurierten Quelle holen.
+    # Schlaegt das fehl, gilt der zuletzt importierte Stand (Warnung im Log/Audit).
+    try:
+        from app.services.org_sync import refresh_org_from_source
+
+        refresh_org_from_source(db, f"round-start:{round_.id}")
+    except Exception:
+        logger.exception("SAP-Aktualisierung vor Rundenstart fehlgeschlagen -- verwende letzten Stand")
+
     # Org-Snapshot: aktueller Stand von `person` zum Startzeitpunkt (CLAUDE.md "Snapshot!").
     # Spaetere Org-Aenderungen wirken sich nicht rueckwirkend auf diese Runde aus, weil
     # round_target/participation eigene Zeilen sind, unabhaengig vom weiterlaufenden `person`.

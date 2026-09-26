@@ -70,6 +70,34 @@ def run_automation_now(db: Session = Depends(get_db)) -> dict:
     return {"created_round_id": created.id if created else None}
 
 
+@router.get("/org-status")
+def org_status(db: Session = Depends(get_db)) -> dict:
+    """Stand der Organisationsdaten (letzter Import) und ob eine SAP-Quelle fuer die Automatik eingerichtet ist."""
+    from app.services.org_sync import configured_source, last_import
+    from app.services.scheduler import get_schedule_config
+
+    cfg = get_schedule_config(db)
+    try:
+        configured = configured_source(cfg) is not None
+    except OSError:
+        configured = False
+    return {"last_import": last_import(db), "source_configured": configured, "source": cfg.get("source", "csv")}
+
+
+@router.post("/org-sync")
+def org_sync(db: Session = Depends(get_db)) -> dict:
+    """Teams jetzt aus der SAP-Quelle aktualisieren (vor Rundenplanung)."""
+    from app.services.org_sync import refresh_org_from_source
+
+    try:
+        summary = refresh_org_from_source(db, "round-wizard")
+    except Exception as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"SAP-Aktualisierung fehlgeschlagen: {exc}") from exc
+    if summary is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Keine SAP-Quelle eingerichtet (Organisation → Import-Zeitplan)")
+    return {"summary": summary}
+
+
 @router.get("/preview")
 def recipients_preview(fachbereiche: str | None = None, db: Session = Depends(get_db)) -> dict:
     return preview_recipients(db, [f for f in fachbereiche.split(",") if f] if fachbereiche else None)

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import CurrentUser, get_current_user
 from app.core.config import get_settings
 from app.db import get_db
-from app.models.round import Participation, ParticipationStatus, Round, RoundTarget
+from app.models.round import Participation, ParticipationStatus, Round, RoundStatus, RoundTarget
 from app.schemas.feedback_webhook import LimeSurveyCompleteWebhookIn
 from app.schemas.round import MyFeedbackOut
 
@@ -33,7 +33,7 @@ def my_feedbacks(
         if not target.evaluable or target.team_size_snapshot < settings.min_team_size_for_invitation:
             continue
         link = None
-        if p.status == ParticipationStatus.offen and p.limesurvey_token and target.limesurvey_sid:
+        if round_.status == RoundStatus.offen and p.status == ParticipationStatus.offen and p.limesurvey_token and target.limesurvey_sid:
             link = (
                 f"{settings.limesurvey_url_public}/index.php/survey/index/"
                 f"sid/{target.limesurvey_sid}/token/{p.limesurvey_token}"
@@ -47,6 +47,8 @@ def my_feedbacks(
                 due_date=round_.end_at.date().isoformat(),
                 feedback_link=link,
                 completed_date=p.completed_date.isoformat() if p.completed_date else None,
+                survey_id=target.limesurvey_sid,
+                round_closed=round_.status != RoundStatus.offen,
             )
         )
     return result

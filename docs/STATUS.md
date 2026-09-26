@@ -91,3 +91,8 @@ Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten 
 - Admin-Oberfläche „Report-Layout“ mit Live-Vorschau und Beispiel-Downloads; Export der Reports als PDF, PowerPoint, Excel, CSV (Führungskraft: eigener Report; Auswertungs-Admin: Benchmark).
 - Tests: 111 Backend (inkl. 6 neue), 13 Playwright. PDF/PowerPoint/Excel/CSV im Docker-Container geprüft (HTTP 200, gültige Dateien); Öffnen in echtem PowerPoint/Excel nicht geprüft.
 - Neue Rückfragen: `OPEN_QUESTIONS.md` („Neu: Report-Layout und Exporte“).
+
+## Nachtrag 5: Teilnahme-Verlauf, lokale Antwortkopie, SAP-Teams automatisch
+- „Meine Feedbacks“: Verlauf mit Status je Runde; abgegebene Antworten nur lesbar und – anonymitätsgerecht – als lokale Kopie auf dem Gerät ansehbar (Ende-zu-Ende in echtem Browser mit LimeSurvey geprüft: 26 Antworten wurden übernommen).
+- Teams werden vor jedem Rundenstart aus der SAP-Quelle aktualisiert; Assistent zeigt Stand und „Jetzt aus SAP aktualisieren“ (Mock/CSV getestet, echtes SAP nicht).
+- Tests: 113 Backend, 14 Playwright.

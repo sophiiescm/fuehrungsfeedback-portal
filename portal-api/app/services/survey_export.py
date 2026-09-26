@@ -22,6 +22,7 @@ from __future__ import annotations
 import csv
 import io
 
+from app.core.config import get_settings
 from app.models.survey import Question, QuestionType, SurveyVersion
 
 # CLAUDE.md Anonymitaetsregeln, immer erzwungen (siehe docs/limesurvey-analyse.md):
@@ -83,6 +84,9 @@ def build_tsv(version: SurveyVersion, language: str = "de") -> str:
 
     title = version.survey_template.name if version.survey_template else f"Umfrage {version.id}"
     rows.append(_row("SL", name="surveyls_title", text=f"{title} (v{version.version_number})", language=language))
+    portal = get_settings().portal_public_url.rstrip("/")
+    rows.append(_row("SL", name="surveyls_url", text=f"{portal}/feedbacks/quittung", language=language))
+    rows.append(_row("SL", name="surveyls_urldescription", text="Weiter zum Portal", language=language))
 
     ordered_dimensions = sorted(version.dimensions, key=lambda d: d.sort_order)
     by_id = {q.id: q for q in version.questions}

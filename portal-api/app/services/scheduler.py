@@ -52,25 +52,11 @@ def set_schedule_config(db, config: dict) -> dict:
 
 
 def run_nightly_import() -> None:
+    from app.services.org_sync import refresh_org_from_source
+
     db = SessionLocal()
     try:
-        config = get_schedule_config(db)
-        if not config.get("enabled"):
-            return
-        if config.get("source") == "odata":
-            s = get_settings()
-            if not s.odata_base_url:
-                logger.error("ODATA_BASE_URL fehlt")
-                return
-            records = ODataOrgSource(s.odata_base_url, s.odata_user, s.odata_password).fetch()
-        else:
-            csv_path = config.get("csv_path")
-            if not csv_path:
-                return
-            with open(csv_path, encoding="utf-8") as f:
-                records = CsvOrgSource(f.read()).fetch()
-        apply_import(db, records, triggered_by="scheduler")
-        recompute_roles(db)
+        refresh_org_from_source(db, "scheduler")
     except Exception:
         logger.exception("Naechtlicher Org-Import fehlgeschlagen")
     finally:

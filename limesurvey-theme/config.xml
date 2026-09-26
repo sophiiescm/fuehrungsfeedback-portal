@@ -19,5 +19,8 @@
         <css>
             <add>css/portal.css</add>
         </css>
+        <js>
+            <add>scripts/receipt.js</add>
+        </js>
     </files>
 </config>

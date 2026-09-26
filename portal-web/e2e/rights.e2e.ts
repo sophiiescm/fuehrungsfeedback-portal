@@ -76,3 +76,26 @@ test('Führungskraft: Export-Menü bietet PDF, PowerPoint, Excel und CSV', async
 	const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: /PowerPoint/ }).click()]);
 	expect(download.suggestedFilename()).toBe('feedback-report.pptx');
 });
+
+test('Meine Feedbacks: Verlauf mit Teilnahme-Status und lokal gespeicherter, nur lesbarer Antwortkopie', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await loginAs(page, 'P01900', '/dashboard');
+	const item = (id: number, over: object) => ({ participation_id: id, round_name: 'H1/2026', leader_name: 'Uma Koch', status: 'erledigt', due_date: '2026-04-15', feedback_link: null, completed_date: '2026-04-02', survey_id: 111, round_closed: true, ...over });
+	await page.route('**/feedbacks/mine', (r) => r.fulfill({ json: [
+		item(1, {}),
+		item(2, { round_name: 'H2/2025', status: 'offen', completed_date: null, survey_id: 222, due_date: '2025-10-15' }),
+		item(3, { round_name: 'Aktuell', status: 'offen', completed_date: null, round_closed: false, survey_id: 333, feedback_link: 'http://localhost:8080/x', due_date: '2099-01-01' })
+	] }));
+	await page.evaluate(() => localStorage.setItem('ffp_receipt:P01900:111', JSON.stringify({ sid: '111', at: '2026-04-02', items: [{ g: 'Kommunikation', q: 'Klar kommuniziert?', a: ['Trifft eher zu (4)'] }] })));
+	await page.goto('/feedbacks');
+	await expect(page.getByText('Abgegeben am 2026-04-02')).toBeVisible();
+	await expect(page.getByText('Nicht teilgenommen')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Jetzt starten' })).toBeVisible();
+	await page.getByRole('button', { name: 'Meine Antworten ansehen' }).click();
+	await expect(page.getByRole('dialog').getByText('Trifft eher zu (4)')).toBeVisible();
+	await expect(page.getByRole('dialog').locator('input, textarea')).toHaveCount(0); // nur lesbar
+	await page.screenshot({ path: 'e2e/screens/feedbacks-verlauf.png' });
+	page.once('dialog', (d) => d.accept());
+	await page.getByRole('button', { name: 'Kopie von diesem Gerät löschen' }).click();
+	await expect(page.getByRole('button', { name: 'Meine Antworten ansehen' })).toHaveCount(0);
+});

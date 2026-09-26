@@ -52,3 +52,8 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 3. **Weitergabe:** Exportierte Reports sind nicht mit einem Wasserzeichen versehen. Soll „Vertraulich – nur für [Name]“ als Wasserzeichen/Fußzeile pro Person eingesetzt werden? (Platzhalter {leader} ist bereits in Titel/Untertitel möglich.)
 4. **Report-Layout je Runde oder Fachbereich:** Aktuell ein globales Layout. Sind unterschiedliche Layouts (z. B. für Produktion vs. Büro) gewünscht?
 5. **Sprache:** Reports sind deutsch; Mehrsprachigkeit offen.
+
+## Neu: Eigene Antworten ansehen und SAP-Teams
+1. **Antwort-Kopie nur lokal:** Damit die Anonymität erhalten bleibt, liegt die Kopie nur im Browser des Geräts, auf dem abgegeben wurde (nicht auf dem Server, nicht auf Kiosk-Geräten). Wer das Gerät wechselt oder Browserdaten löscht, sieht sie nicht mehr. Reicht das? Eine serverseitige (auch verschlüsselte) Speicherung würde die Person↔Antwort-Verknüpfung schaffen und braucht die ausdrückliche Freigabe von Betriebsrat/Datenschutz und eine Änderung der Regel in CLAUDE.md.
+2. **Mitarbeiter-App:** Wenn Mitarbeitende die Umfrage künftig in der Mitarbeiter-App öffnen (Webview), gilt „Gerät“ = App-Speicher; bitte prüfen, ob der Webview localStorage dauerhaft behält.
+3. **SAP-Quelle für Auto-Aktualisierung:** Damit Teams vor jeder Runde automatisch aktualisiert werden, muss unter Organisation → Import-Zeitplan die Quelle (OData oder CSV) aktiviert und `ODATA_*` gesetzt sein (Zugangsdaten offen, siehe oben). Ohne Quelle gilt der zuletzt manuell importierte Stand.

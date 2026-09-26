@@ -38,6 +38,8 @@ export interface MyFeedback {
 	due_date: string;
 	feedback_link: string | null;
 	completed_date: string | null;
+	survey_id: number | null;
+	round_closed: boolean;
 }
 export interface Notification {
 	id: number;

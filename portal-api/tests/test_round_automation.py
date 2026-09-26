@@ -71,3 +71,27 @@ def test_manual_reminder_and_exports_require_admin_and_work(client, seeded_users
     csv = client.get(f"/rounds/{r.id}/response-rate.csv", headers=h)
     assert csv.status_code == 200 and "fachbereich;eingeladen" in csv.text
     assert client.get(f"/benchmark/export.csv?round_id={r.id}", headers=h).status_code == 200
+
+
+def test_org_refresh_from_sap_source_creates_teams(db_session, tmp_path):
+    from app.models.person import Person
+    from app.services.org_sync import last_import, refresh_org_from_source
+    from app.services.scheduler import set_schedule_config
+
+    assert refresh_org_from_source(db_session, "test") is None  # nichts konfiguriert
+    header = "personalnummer;vorname;nachname;email;org_einheit;fachbereich;manager_personalnummer;standort;aktiv\n"
+    rows = "L1;Lea;Leiter;l@x.test;Abt;IT;;Ort;1\n" + "".join(f"M{i};M;{i};m{i}@x.test;Abt;IT;L1;Ort;1\n" for i in range(3))
+    f = tmp_path / "org.csv"
+    f.write_text(header + rows, encoding="utf-8")
+    set_schedule_config(db_session, {"enabled": True, "cron": "0 2 * * *", "csv_path": str(f), "source": "csv"})
+    summary = refresh_org_from_source(db_session, "test")
+    assert summary is not None
+    assert db_session.query(Person).filter_by(manager_personalnummer="L1").count() == 3
+    assert last_import(db_session)["triggered_by"] == "test"
+
+
+def test_org_status_and_sync_endpoint(client, seeded_users):
+    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
+    st = client.get("/rounds/org-status", headers=h).json()
+    assert st["source_configured"] is False
+    assert client.post("/rounds/org-sync", headers=h).status_code == 409

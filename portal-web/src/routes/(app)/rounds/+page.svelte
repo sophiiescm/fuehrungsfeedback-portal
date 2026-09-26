@@ -34,6 +34,9 @@
 	let name = $state('');
 	let preview = $state<Preview | null>(null);
 	let startNow = $state(false);
+	let orgStatus = $state<{ last_import: { finished_at: string | null; triggered_by: string } | null; source_configured: boolean; source: string } | null>(null);
+	let syncing = $state(false);
+	let syncMsg = $state('');
 
 	const STEPS = ['Fragebogen', 'Zeitraum', 'Empfänger', 'Bestätigen'];
 	const pad = (n: number) => String(n).padStart(2, '0');
@@ -65,7 +68,21 @@
 		e.setDate(e.getDate() + days);
 		end = local(e);
 	}
+	async function syncSap() {
+		syncing = true;
+		syncMsg = '';
+		try {
+			await api.post('/rounds/org-sync');
+			syncMsg = 'Teams wurden aus SAP aktualisiert.';
+		} catch (e) {
+			syncMsg = e instanceof Error ? e.message : 'Aktualisierung fehlgeschlagen';
+		} finally {
+			syncing = false;
+			await loadPreview();
+		}
+	}
 	async function loadPreview() {
+		orgStatus = await api.get('/rounds/org-status');
 		const q = selectedFb.length ? `?fachbereiche=${encodeURIComponent(selectedFb.join(','))}` : '';
 		preview = await api.get<Preview>(`/rounds/preview${q}`);
 	}
@@ -160,6 +177,16 @@
 						onclick={async () => { selectedFb = selectedFb.includes(f) ? selectedFb.filter((x) => x !== f) : [...selectedFb, f]; await loadPreview(); }}>{f}</button>
 				{/each}
 			</div>
+			<div class="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] p-3 text-sm" style="background: var(--surface-glass-strong); color: var(--text-secondary)">
+				<span class="flex-1">
+					🔄 Teams kommen automatisch aus SAP.
+					{#if orgStatus?.last_import?.finished_at}Letzter Stand: {orgStatus.last_import.finished_at.slice(0, 16).replace('T', ' ')} Uhr.{:else}Noch kein Import.{/if}
+					{#if orgStatus && !orgStatus.source_configured}<br /><span style="color: var(--warning)">Keine SAP-Quelle eingerichtet – es gilt der zuletzt importierte Stand (Organisation → Import).</span>{/if}
+					Beim Start der Runde wird der Stand automatisch nochmals abgeglichen.
+				</span>
+				{#if orgStatus?.source_configured}<Button variant="secondary" onclick={syncSap} disabled={syncing}>{syncing ? 'Aktualisiere…' : 'Jetzt aus SAP aktualisieren'}</Button>{/if}
+			</div>
+			{#if syncMsg}<p class="mb-2 text-xs" style="color: var(--text-secondary)">{syncMsg}</p>{/if}
 			{#if preview}
 				<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
 					{#each [['Führungskräfte', preview.total.leaders], ['Einladungen', preview.total.recipients], ['ohne E-Mail', preview.total.without_email], ['nicht auswertbar', preview.total.excluded_leaders]] as [l, v]}
