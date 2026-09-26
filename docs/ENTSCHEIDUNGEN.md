@@ -41,4 +41,6 @@
 | 28 | Rate-Limit für den Code-Login als In-Memory-Zähler (5 Fehlversuche/15 Min. je Personalnummer und je IP) | Reicht für den Prototyp; für mehrere API-Instanzen gemeinsamen Speicher nachrüsten (STATUS.md). |
 | 29 | Lasttest direkt gegen LimeSurvey (Umfrage-Teilnahme), nicht gegen das Portal | Die Teilnahme läuft technisch komplett in LimeSurvey; das Portal ist nur beim Start und in der Rücklauf-Anzeige beteiligt. |
 
+| 30 | Umsetzungsreihenfolge nach Demo-Review: (1) Reports/Benchmark/NPS, (2) Umfrage-Editor mit neuen Fragetypen und Verzweigungen, (3) Runden-Automatisierung, (4) Entra-ID-SSO, Trusted-App-SSO, SuccessFactors-OData, Freitext-Kategorien, Outlook-Versand | Vorgabe der Fachseite (Word-Notizen); Rückfragen wurden als Annahmen in `OPEN_QUESTIONS.md` festgehalten statt nachzufragen. |
+
 (Claude Code ergänzt weitere Entscheidungen fortlaufend.)
