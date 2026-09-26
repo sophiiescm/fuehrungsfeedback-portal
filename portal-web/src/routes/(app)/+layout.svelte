@@ -8,6 +8,23 @@
 	let { children } = $props();
 	let loading = $state(true);
 
+	// Kiosk-Modus (Code-Login): automatischer Logout nach 3 Minuten Inaktivitaet
+	$effect(() => {
+		if (!browser || !auth.kiosk) return;
+		let timer: ReturnType<typeof setTimeout>;
+		const reset = () => {
+			clearTimeout(timer);
+			timer = setTimeout(() => auth.logout(), 3 * 60 * 1000);
+		};
+		const events = ['click', 'keydown', 'touchstart', 'mousemove'];
+		events.forEach((e) => window.addEventListener(e, reset));
+		reset();
+		return () => {
+			clearTimeout(timer);
+			events.forEach((e) => window.removeEventListener(e, reset));
+		};
+	});
+
 	$effect(() => {
 		if (!browser) return;
 		if (!auth.token) {

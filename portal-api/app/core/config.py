@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     limesurvey_rc_api_url: str = "http://localhost:8080/index.php/admin/remotecontrol"
     limesurvey_rc_user: str = "admin"
     limesurvey_rc_password: str = "admin_dev_password"
+    # Oeffentliche Basis-URL, unter der Teilnehmende (Browser) LimeSurvey erreichen
+    # (kann von limesurvey_rc_api_url abweichen, das intern das Docker-Netzwerk nutzt)
+    limesurvey_url_public: str = "http://localhost:8080"
+    portal_public_url: str = "http://localhost:5173"
 
     feedbackbridge_hmac_secret: str = "change_me_dev_hmac_secret"
 

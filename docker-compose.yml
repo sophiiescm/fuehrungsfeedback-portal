@@ -93,6 +93,7 @@ services:
       LIMESURVEY_RC_API_URL: http://limesurvey:8080/index.php/admin/remotecontrol
       LIMESURVEY_RC_USER: ${LIMESURVEY_ADMIN_USER:-admin}
       LIMESURVEY_RC_PASSWORD: ${LIMESURVEY_ADMIN_PASSWORD:-admin_dev_password}
+      LIMESURVEY_URL_PUBLIC: ${LIMESURVEY_URL:-http://localhost:8080}
       OIDC_ENABLED: ${OIDC_ENABLED:-false}
       OIDC_ISSUER: ${OIDC_ISSUER:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}

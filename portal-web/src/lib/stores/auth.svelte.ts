@@ -23,6 +23,13 @@ class AuthState {
 		return this.user?.roles.includes(role) ?? false;
 	}
 
+	kiosk = $state(browser ? localStorage.getItem('ffp_kiosk') === '1' : false);
+
+	setKiosk(on: boolean) {
+		this.kiosk = on;
+		if (browser) on ? localStorage.setItem('ffp_kiosk', '1') : localStorage.removeItem('ffp_kiosk');
+	}
+
 	setToken(token: string) {
 		this.token = token;
 		if (browser) localStorage.setItem(STORAGE_KEY, token);
@@ -35,7 +42,11 @@ class AuthState {
 	logout() {
 		this.token = null;
 		this.user = null;
-		if (browser) localStorage.removeItem(STORAGE_KEY);
+		this.kiosk = false;
+		if (browser) {
+			localStorage.removeItem(STORAGE_KEY);
+			localStorage.removeItem('ffp_kiosk');
+		}
 	}
 }
 

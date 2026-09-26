@@ -8,6 +8,7 @@ from app.auth.security import create_access_token
 from app.core.config import get_settings
 from app.db import get_db
 from app.models.person import Person, RoleAssignment
+from app.services.login_codes import verify_login_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -25,6 +26,11 @@ class DevLoginIn(BaseModel):
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class CodeLoginIn(BaseModel):
+    personalnummer: str
+    code: str
 
 
 class MeOut(BaseModel):
@@ -76,6 +82,25 @@ def me(current_user: CurrentUser = Depends(get_current_user)) -> MeOut:
         email=current_user.person.email,
         roles=[r.value for r in current_user.roles],
     )
+
+
+@router.post("/code-login", response_model=TokenOut)
+def code_login(payload: CodeLoginIn, db: Session = Depends(get_db)) -> TokenOut:
+    """Anmeldung mit Personalnummer + Einmalcode fuer Personen ohne E-Mail
+    (CLAUDE.md 'Produktionsmitarbeitende ohne E-Mail')."""
+    person = db.execute(
+        select(Person).where(Person.personalnummer == payload.personalnummer)
+    ).scalar_one_or_none()
+    if person is None or not person.aktiv:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Personalnummer oder Code ungültig")
+
+    match = verify_login_code(db, person, payload.code)
+    if match is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Personalnummer oder Code ungültig")
+
+    roles = db.execute(select(RoleAssignment.role).where(RoleAssignment.person_id == person.id)).scalars().all()
+    token = create_access_token(person.id, [r.value for r in roles])
+    return TokenOut(access_token=token)
 
 
 @router.get("/oidc/login")

@@ -90,34 +90,34 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz:** Eine Umfrage wird im Portal erstellt, in LimeSurvey angelegt und ist dort aufrufbar. Verifiziert: "Führungsfeedback Standard" (5 Dimensionen, 23 Fragen) live nach LimeSurvey übertragen (`sid` gespeichert), dort mit korrekten Gruppen, Fragetypen (`L`/`T`) und Pflicht-Einstellungen (`anonymized=Y`, `datestamp=N`, `ipaddr=N`, `printanswers=Y`, `tokenanswerspersistence=Y`) bestätigt. Editor, Drag-&-Drop-Umsortierung, Vorschau und Versionssperre im Browser gegen den containerisierten Stack getestet. 47/47 Backend-Tests grün.
 
 ## Phase 4 – Befragungsrunden, Teilnahme, Benachrichtigungen
-- [ ] Runde anlegen mit:
+- [x] Runde anlegen mit:
   - Umfrageversion
   - Start und Ende
   - Erinnerungstage
   - Report-Kanal (Portal, E-Mail, beides)
   - Zielgruppe (alle bzw. Fachbereiche)
-- [ ] Beim Start:
+- [x] Beim Start:
   - Org-Snapshot erstellen
   - Ziel-FK bestimmen (Team ≥ 3)
   - Teilnahmen erzeugen: jede Person bewertet ihre direkte FK
   - Tokens in LimeSurvey anlegen (mit `attribute_1 = leader_code`)
   - Einladungen versenden
-- [ ] Plugin `FeedbackBridge`: Webhook bei Abschluss (HMAC), Portal setzt `participation.status = erledigt` (nur Datum)
+- [x] Plugin `FeedbackBridge`: Webhook bei Abschluss (HMAC), Portal setzt `participation.status = erledigt` (nur Datum)
   - Fallback: Polling über `list_participants(completed)`
-- [ ] „Meine Feedbacks“:
+- [x] „Meine Feedbacks“:
   - Liste offener und erledigter Feedbacks mit Fälligkeit
   - Button „Jetzt Feedback geben“ öffnet LimeSurvey mit Token
   - Hinweis zur PDF-Kopie bzw. warum spätere Einsicht nicht möglich ist
-- [ ] Scheduler (APScheduler): Start, Erinnerungen (nur Offene), Schließen
-- [ ] E-Mail-Vorlagen bearbeitbar, Versand über SMTP (lokal Mailpit), In-Portal-Benachrichtigungen
-- [ ] Personen ohne E-Mail:
+- [x] Scheduler (APScheduler): Start, Erinnerungen (nur Offene), Schließen
+- [x] E-Mail-Vorlagen bearbeitbar, Versand über SMTP (lokal Mailpit), In-Portal-Benachrichtigungen
+- [x] Personen ohne E-Mail:
   - Code-Generierung (gehasht)
   - PDF-Serienbrief mit QR
   - Team-Aushang ohne Einzelstatus
   - Kiosk-Modus
-- [ ] Admin-Dashboard: Rücklaufquote gesamt, je Fachbereich und je FK (je FK nur als „≥ Schwelle erreicht ja/nein“ plus Quote)
+- [x] Admin-Dashboard: Rücklaufquote gesamt, je Fachbereich und je FK (je FK nur als „≥ Schwelle erreicht ja/nein“ plus Quote)
 
-**Akzeptanz:** Testrunde mit Seed-Daten starten. Mails erscheinen in Mailpit. Teilnahme per Token und per Personalnummer + Code funktioniert. Eine Doppelteilnahme ist unmöglich. Erinnerungen gehen nur an Offene.
+**Akzeptanz (verifiziert):** Demo-Runde (Fachbereich Personal) gegen den echten Stack: 66 Führungskräfte, 65 auswertbar (1 Team < 3 ohne Umfrage/Einladung), 235 Teilnahmen, je Team eine LimeSurvey-Kopie, 147 Mails in Mailpit, Polling-Abgleich setzt Status, Webhook-HMAC getestet (59 Backend-Tests grün, 1 lokal übersprungen: PDF, läuft im Container). Offen/nicht live geprüft: Plugin-Aktivierung in der LimeSurvey-UI (PHP-Syntax und Events gegen Quellcode geprüft), echte Umfrage-Abgabe per Browser mit Webhook. Testrunde mit Seed-Daten starten. Mails erscheinen in Mailpit. Teilnahme per Token und per Personalnummer + Code funktioniert. Eine Doppelteilnahme ist unmöglich. Erinnerungen gehen nur an Offene.
 
 ## Phase 5 – Auswertung, Reports, Benchmarking, Trend, KI
 - [ ] Nach dem Schließen:

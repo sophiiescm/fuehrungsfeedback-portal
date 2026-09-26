@@ -12,6 +12,7 @@ import logging
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import select
 
 from app.db import SessionLocal
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 SETTING_KEY = "org_import_schedule"
 JOB_ID = "nightly_org_import"
+ROUND_LIFECYCLE_JOB_ID = "round_lifecycle_tick"
 
 _scheduler: BackgroundScheduler | None = None
 
@@ -73,6 +75,23 @@ def _apply_schedule(scheduler: BackgroundScheduler, config: dict) -> None:
         scheduler.add_job(run_nightly_import, CronTrigger.from_crontab(config["cron"]), id=JOB_ID)
 
 
+def run_round_lifecycle_tick() -> None:
+    """Startet faellige Runden, gleicht offene Teilnahmen ab (Polling-Fallback
+    fuer den FeedbackBridge-Webhook), verschickt faellige Erinnerungen und
+    schliesst abgelaufene Runden. Siehe app.services.round_lifecycle."""
+    from app.services.round_lifecycle import run_lifecycle_tick
+
+    db = SessionLocal()
+    try:
+        result = run_lifecycle_tick(db)
+        if any(result.values()):
+            logger.info("Runden-Tick: %s", result)
+    except Exception:
+        logger.exception("Runden-Lebenszyklus-Tick fehlgeschlagen")
+    finally:
+        db.close()
+
+
 def start_scheduler() -> BackgroundScheduler:
     global _scheduler
     scheduler = BackgroundScheduler()
@@ -82,6 +101,7 @@ def start_scheduler() -> BackgroundScheduler:
     finally:
         db.close()
     _apply_schedule(scheduler, config)
+    scheduler.add_job(run_round_lifecycle_tick, IntervalTrigger(minutes=15), id=ROUND_LIFECYCLE_JOB_ID)
     scheduler.start()
     _scheduler = scheduler
     return scheduler

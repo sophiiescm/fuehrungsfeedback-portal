@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <metadata>
+        <name>FeedbackBridge</name>
+        <type>plugin</type>
+        <creationDate>2026-09-26</creationDate>
+        <last_update>2026-09-26</last_update>
+        <author>Fuehrungsfeedback-Portal</author>
+        <version>1.0.0</version>
+        <license>MIT</license>
+        <description><![CDATA[Verbindet LimeSurvey mit dem Fuehrungsfeedback-Portal (Teilnahmestatus-Webhook, Pflicht-Einstellungen)]]></description>
+    </metadata>
+
+    <compatibility>
+        <version>6.0</version>
+    </compatibility>
+
+    <updaters disabled="disabled">
+    </updaters>
+</config>

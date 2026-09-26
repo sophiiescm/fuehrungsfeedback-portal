@@ -1,3 +1,4 @@
+from app.models.login_code import LoginCode
 from app.models.notification import MailTemplate, Notification
 from app.models.person import OrgUnit, Person, RoleAssignment
 from app.models.result import Report, ResultAggregate
@@ -23,4 +24,5 @@ __all__ = [
     "Setting",
     "ImportLog",
     "AuditLog",
+    "LoginCode",
 ]

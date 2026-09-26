@@ -40,11 +40,20 @@
 		}
 	}
 
-	function loginWithCode(event: SubmitEvent) {
+	async function loginWithCode(event: SubmitEvent) {
 		event.preventDefault();
-		// Personalnummer + Einmalcode: die Code-Generierung und -Pruefung folgt in
-		// Phase 4 (siehe TASKS.md "Produktionsmitarbeitende ohne E-Mail").
-		error = 'Anmeldung per Personalnummer und Code folgt in einer spaeteren Phase.';
+		error = '';
+		try {
+			const result = await api.post<{ access_token: string }>('/auth/code-login', {
+				personalnummer: personalnummer.trim(),
+				code: code.trim().toUpperCase()
+			});
+			auth.setToken(result.access_token);
+			auth.setKiosk(true);
+			await goto('/feedbacks');
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'Anmeldung fehlgeschlagen';
+		}
 	}
 
 	function loginWithSso() {
