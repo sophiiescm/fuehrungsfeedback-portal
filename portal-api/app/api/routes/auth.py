@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -8,6 +9,7 @@ from app.auth.security import create_access_token
 from app.core.config import get_settings
 from app.db import get_db
 from app.models.person import Person, RoleAssignment
+from app.services import sso
 from app.services.login_codes import verify_login_code
 from app.services.rate_limit import login_limiter
 
@@ -108,11 +110,48 @@ def code_login(payload: CodeLoginIn, request: Request, db: Session = Depends(get
     return TokenOut(access_token=token)
 
 
+class AppSsoIn(BaseModel):
+    assertion: str
+
+
+class OidcCallbackIn(BaseModel):
+    code: str
+    state: str
+
+
+@router.post("/app-sso", response_model=TokenOut)
+def app_sso(payload: AppSsoIn, request: Request, db: Session = Depends(get_db)) -> TokenOut:
+    """Trusted-App-SSO: Anmeldung aus der Mitarbeiter-App per signierter Einmal-Assertion."""
+    key = f"ip:{request.client.host if request.client else '?'}"
+    if login_limiter.blocked(key):
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Zu viele Fehlversuche.")
+    try:
+        person = sso.verify_app_assertion(db, payload.assertion)
+    except sso.SsoError as exc:
+        login_limiter.fail(key)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
+    return TokenOut(access_token=sso.issue_token(db, person))
+
+
 @router.get("/oidc/login")
 def oidc_login() -> dict:
-    settings = get_settings()
-    if not settings.oidc_enabled:
+    if not get_settings().oidc_enabled:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "OIDC ist deaktiviert (OIDC_ENABLED=false)")
-    # Vollstaendiger Redirect-Flow (State-Handling, Callback) wird verdrahtet, sobald
-    # ein echter Identity-Provider zum Testen verfuegbar ist (siehe OPEN_QUESTIONS.md).
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "OIDC-Redirect-Flow folgt mit echtem IdP-Test")
+    return {"url": sso.oidc_authorization_url()}
+
+
+@router.post("/oidc/callback", response_model=TokenOut)
+def oidc_callback(payload: OidcCallbackIn, db: Session = Depends(get_db)) -> TokenOut:
+    if not get_settings().oidc_enabled:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "OIDC ist deaktiviert (OIDC_ENABLED=false)")
+    try:
+        person = sso.oidc_complete(db, payload.code, payload.state)
+    except (sso.SsoError, httpx.HTTPError) as exc:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"SSO fehlgeschlagen: {exc}") from exc
+    return TokenOut(access_token=sso.issue_token(db, person))
+
+
+@router.get("/methods")
+def login_methods() -> dict:
+    s = get_settings()
+    return {"oidc": s.oidc_enabled, "app_sso": bool(s.app_sso_secret)}

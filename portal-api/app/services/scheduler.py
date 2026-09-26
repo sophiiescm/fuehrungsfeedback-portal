@@ -18,7 +18,8 @@ from sqlalchemy import select
 from app.db import SessionLocal
 from app.models.system import Setting
 from app.services.org_import import apply_import
-from app.services.org_source import CsvOrgSource
+from app.core.config import get_settings
+from app.services.org_source import CsvOrgSource, ODataOrgSource
 from app.services.roles import recompute_roles
 
 logger = logging.getLogger(__name__)
@@ -54,12 +55,20 @@ def run_nightly_import() -> None:
     db = SessionLocal()
     try:
         config = get_schedule_config(db)
-        csv_path = config.get("csv_path")
-        if not config.get("enabled") or not csv_path:
+        if not config.get("enabled"):
             return
-        with open(csv_path, encoding="utf-8") as f:
-            content = f.read()
-        records = CsvOrgSource(content).fetch()
+        if config.get("source") == "odata":
+            s = get_settings()
+            if not s.odata_base_url:
+                logger.error("ODATA_BASE_URL fehlt")
+                return
+            records = ODataOrgSource(s.odata_base_url, s.odata_user, s.odata_password).fetch()
+        else:
+            csv_path = config.get("csv_path")
+            if not csv_path:
+                return
+            with open(csv_path, encoding="utf-8") as f:
+                records = CsvOrgSource(f.read()).fetch()
         apply_import(db, records, triggered_by="scheduler")
         recompute_roles(db)
     except Exception:
@@ -71,7 +80,7 @@ def run_nightly_import() -> None:
 def _apply_schedule(scheduler: BackgroundScheduler, config: dict) -> None:
     if scheduler.get_job(JOB_ID):
         scheduler.remove_job(JOB_ID)
-    if config.get("enabled") and config.get("csv_path"):
+    if config.get("enabled") and (config.get("csv_path") or config.get("source") == "odata"):
         scheduler.add_job(run_nightly_import, CronTrigger.from_crontab(config["cron"]), id=JOB_ID)
 
 

@@ -88,20 +88,68 @@ class CsvOrgSource(OrgSource):
 
 
 class ODataOrgSource(OrgSource):
-    """Stub fuer SuccessFactors/SAP HCM. Noch nicht implementiert.
+    """SuccessFactors (OData v2) -- Entitaet `User` mit `manager`-Beziehung.
 
-    Wenn ein konkretes Zielsystem feststeht (siehe OPEN_QUESTIONS.md), hier
-    die OData-Abfrage ergaenzen und in `OrgRecord`-Objekte uebersetzen. Die
-    Diff-/Plausibilitaets-/Rollenlogik in org_import.py bleibt unveraendert,
-    da sie nur gegen das `OrgSource`-Interface arbeitet.
+    Standard-Feldzuordnung (per `field_map` anpassbar, da Tenants abweichen koennen):
+      userId -> personalnummer, firstName, lastName, email, department -> org_einheit,
+      division -> fachbereich, location -> standort, manager/userId -> Vorgesetzter,
+      status ('active'/'t' ...) -> aktiv. Paging ueber $top/$skip, Basic-Auth.
     """
 
-    def __init__(self, base_url: str, api_key: str):
-        self._base_url = base_url
-        self._api_key = api_key
+    DEFAULT_MAP = {
+        "personalnummer": "userId", "vorname": "firstName", "nachname": "lastName", "email": "email",
+        "org_einheit": "department", "fachbereich": "division", "standort": "location", "status": "status",
+    }
+    ACTIVE = {"active", "t", "a", "true", "1"}
+
+    def __init__(self, base_url: str, user: str | None = None, password: str | None = None,
+                 field_map: dict[str, str] | None = None, page_size: int = 200, client=None):
+        self._base_url = base_url.rstrip("/")
+        self._auth = (user, password) if user else None
+        self._map = {**self.DEFAULT_MAP, **(field_map or {})}
+        self._page = page_size
+        self._client = client  # fuer Tests (httpx-Client mit MockTransport)
+
+    def _get(self, url: str, params: dict) -> dict:
+        import httpx
+
+        client = self._client or httpx.Client(timeout=30)
+        try:
+            r = client.get(url, params=params, auth=self._auth, headers={"Accept": "application/json"})
+            r.raise_for_status()
+            return r.json()
+        except httpx.HTTPError as exc:
+            raise OrgSourceError(f"OData-Abruf fehlgeschlagen: {exc}") from exc
 
     def fetch(self) -> list[OrgRecord]:
-        raise NotImplementedError(
-            "ODataOrgSource ist ein vorbereiteter Stub. Siehe OPEN_QUESTIONS.md "
-            "(SAP-System noch nicht festgelegt)."
-        )
+        m = self._map
+        select_fields = ",".join(m.values()) + ",manager/userId"
+        records: list[OrgRecord] = []
+        skip = 0
+        while True:
+            data = self._get(f"{self._base_url}/User", {
+                "$format": "json", "$select": select_fields, "$expand": "manager",
+                "$top": self._page, "$skip": skip,
+            })
+            d = data.get("d", data)
+            rows = d.get("results", d.get("value", []))
+            for row in rows:
+                pnr = str(row.get(m["personalnummer"]) or "").strip()
+                if not pnr:
+                    raise OrgSourceError("OData: Datensatz ohne Personalnummer")
+                mgr = row.get("manager") or {}
+                mgr_id = str(mgr.get("userId") or "").strip() or None
+                records.append(OrgRecord(
+                    personalnummer=pnr,
+                    vorname=(row.get(m["vorname"]) or "").strip(),
+                    nachname=(row.get(m["nachname"]) or "").strip(),
+                    email=(row.get(m["email"]) or "").strip() or None,
+                    org_einheit=(row.get(m["org_einheit"]) or "").strip(),
+                    fachbereich=(row.get(m["fachbereich"]) or "").strip(),
+                    manager_personalnummer=mgr_id if mgr_id != pnr else None,
+                    standort=(row.get(m["standort"]) or "").strip() or None,
+                    aktiv=str(row.get(m["status"], "active")).strip().lower() in self.ACTIVE,
+                ))
+            if len(rows) < self._page:
+                return records
+            skip += self._page

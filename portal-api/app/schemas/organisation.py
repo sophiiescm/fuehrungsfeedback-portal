@@ -86,12 +86,14 @@ class ImportScheduleOut(BaseModel):
     enabled: bool
     cron: str
     csv_path: str | None
+    source: str = "csv"
 
 
 class ImportScheduleIn(BaseModel):
     enabled: bool
     cron: str = "0 2 * * *"
     csv_path: str | None = None
+    source: str = "csv"  # csv | odata
 
 
 class OrgTreeNodeOut(BaseModel):

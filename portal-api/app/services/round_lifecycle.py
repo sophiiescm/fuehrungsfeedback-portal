@@ -35,6 +35,36 @@ def _generate_leader_code() -> str:
     return "FK-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 
+def preview_recipients(db: Session, fachbereiche: list[str] | None = None) -> dict:
+    """Vorschau vor dem Start (aus dem aktuellen SAP-/Org-Stand): wer wuerde bewertet und wer eingeladen?
+    Keine Namen von Teilnehmenden, nur Zahlen je Fachbereich und die ausgeschlossenen Fuehrungskraefte."""
+    settings = get_settings()
+    persons = db.execute(select(Person).where(Person.aktiv.is_(True))).scalars().all()
+    by_pnr = {p.personalnummer: p for p in persons}
+    teams: dict[str, list[Person]] = {}
+    for p in persons:
+        if p.manager_personalnummer in by_pnr:
+            teams.setdefault(p.manager_personalnummer, []).append(p)
+    wanted = set(fachbereiche) if fachbereiche else None
+    per_fb: dict[str, dict] = {}
+    excluded = []
+    for pnr, members in teams.items():
+        leader = by_pnr[pnr]
+        fb = leader.org_unit.fachbereich if leader.org_unit else "Unbekannt"
+        if wanted is not None and fb not in wanted:
+            continue
+        row = per_fb.setdefault(fb, {"leaders": 0, "excluded_leaders": 0, "recipients": 0, "without_email": 0})
+        if len(members) < settings.min_team_size_for_invitation:
+            row["excluded_leaders"] += 1
+            excluded.append({"leader": leader.full_name, "fachbereich": fb, "team_size": len(members)})
+            continue
+        row["leaders"] += 1
+        row["recipients"] += len(members)
+        row["without_email"] += sum(1 for m in members if not m.email)
+    total = {k: sum(r[k] for r in per_fb.values()) for k in ("leaders", "excluded_leaders", "recipients", "without_email")}
+    return {"total": total, "by_fachbereich": per_fb, "excluded": excluded}
+
+
 def start_round(db: Session, round_: Round) -> dict:
     if round_.status not in (RoundStatus.entwurf, RoundStatus.geplant):
         raise RoundLifecycleError("Runde kann nur aus 'entwurf' oder 'geplant' gestartet werden")

@@ -79,6 +79,15 @@ def group_mean(db: Session, round_id: int, dimension_id: int, fachbereich: str |
     return {"mean": round(sum(r[0] for r in rows) / len(rows), 3), "leaders": len(rows)}
 
 
+def _assignment(groups: list[dict], all_texts: list[str]) -> dict[str, str]:
+    """Gespeicherte Kategorien (bei der Auswertung erzeugt), sonst Schluesselwort-Fallback."""
+    out: dict[str, str] = {}
+    for g in groups:
+        for t, c in zip(g["texts"], g.get("cats") or []):
+            out[t] = c
+    return out if out else textanalysis.categorize_keywords(all_texts)
+
+
 def _report_detail(db: Session, target: RoundTarget) -> dict:
     report = db.execute(select(Report).where(Report.round_target_id == target.id)).scalar_one_or_none()
     base = {
@@ -146,7 +155,7 @@ def _report_detail(db: Session, target: RoundTarget) -> dict:
         **base, "available": True, "n_responses": report.n_responses, "dimensions": dims,
         "questions": questions, "nps": nps, "nps_reference": get_nps_reference(db),
         "freetext": groups, "wordcloud": textanalysis.wordcloud(all_texts),
-        "categories": textanalysis.group_by_category(all_texts, textanalysis.categorize_keywords(all_texts)),
+        "categories": textanalysis.group_by_category(all_texts, _assignment(groups, all_texts)),
         "ai_summary": report.ai_summary,
     }
 

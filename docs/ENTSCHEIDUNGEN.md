@@ -53,3 +53,15 @@
 
 ## Nr. 32 – Runden-Automatisierung
 Konfiguration in `setting` (`round_automation`), im Admin-UI (Befragungsrunden) änderbar: Vorlage, nächster Start, Intervall (Standard 6 Monate), Laufzeit, Vorlauf, Namensmuster, Erinnerungen, Versandkanal. Der 15-Minuten-Tick legt die Runde `lead_days` vor dem Start als „geplant" an (idempotent über den Namen) und schiebt `next_start` um das Intervall; Start/Schließen übernimmt der bestehende Lebenszyklus. Annahme: Vorlage bleibt dieselbe Version, bis Admin eine neue wählt.
+
+## Nr. 33 – Trusted-App-SSO für Personen ohne E-Mail
+Die Mitarbeiter-App (dort ist die Person bereits angemeldet und als Firmenangehörige bekannt) öffnet `<Portal>/sso#assertion=<JWT>`. Assertion: HS256, gemeinsames Geheimnis `APP_SSO_SECRET`, `iss=APP_SSO_ISSUER`, `sub=Personalnummer`, `iat/exp` (max. 120 s Laufzeit), `jti` (Einmal-ID, in Tabelle `used_assertion` gegen Replay gesperrt). Fragment statt Query, damit nichts in Server-Logs landet. Ohne `APP_SSO_SECRET` ist der Weg deaktiviert. Code-Brief bleibt Fallback. Die Anonymität ist unberührt: SSO betrifft nur den Portal-Login; LimeSurvey-Teilnahme läuft weiter über anonyme Token.
+
+## Nr. 34 – Entra-ID-OIDC-Flow
+Eigene schlanke Implementierung (httpx + python-jose statt Session-Middleware): `GET /auth/oidc/login` liefert Authorization-URL mit signiertem State (enthält Nonce, 10 min); Frontend-Seite `/auth/callback` sendet `code`+`state` an `POST /auth/oidc/callback`; Portal tauscht Code, prüft ID-Token (RS256 via JWKS, aud, iss, nonce) und ordnet die Person per Claim (`OIDC_PERSON_CLAIM`, Standard `email`) dem Feld `OIDC_PERSON_FIELD` (`email` oder `personalnummer`) zu. Gegen Mock-IdP getestet, nicht gegen echten Entra-Tenant (siehe OPEN_QUESTIONS).
+
+## Nr. 35 – SuccessFactors-OData, Freitext-Kategorien, Outlook, Empfängervorschau
+- `ODataOrgSource`: OData v2 `User` mit `$expand=manager`, Paging, Basic-Auth, anpassbare `field_map`; im nächtlichen Import wählbar (`source: odata`, `ODATA_*`-ENV). Mock-getestet.
+- Kategorien: bei der Auswertung einmalig gespeichert (`freetext[].cats`); KI-Provider (falls konfiguriert) darf nur aus fester Kategorienliste wählen, Ausgabe wird validiert, sonst Schlüsselwort-Fallback. Anzeige nur ab ≥ 3 Texten je Kategorie.
+- Outlook/Exchange Online: SMTP mit STARTTLS + Login (`SMTP_HOST=smtp.office365.com`, Port 587, `SMTP_STARTTLS=true`). Mailpit bleibt nur Test.
+- Empfängervorschau `GET /rounds/preview`: Zahlen je Fachbereich, ohne E-Mail, ausgeschlossene FK – aus dem aktuellen Org-Stand.

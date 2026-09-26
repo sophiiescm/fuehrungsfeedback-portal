@@ -21,6 +21,15 @@
 	let templates = $state<SurveyTemplate[]>([]);
 	let reminders = $state('7,2');
 	let msg = $state('');
+	interface Preview {
+		total: Record<string, number>;
+		by_fachbereich: Record<string, Record<string, number>>;
+		excluded: { leader: string; fachbereich: string; team_size: number }[];
+	}
+	let preview = $state<Preview | null>(null);
+	async function loadPreview() {
+		preview = await api.get<Preview>('/rounds/preview');
+	}
 
 	onMount(async () => {
 		cfg = await api.get<Cfg>('/rounds/automation');
@@ -83,5 +92,25 @@
 			<Button onclick={save}>Speichern</Button>
 			{#if msg}<span class="text-xs" style="color: var(--text-secondary)">{msg}</span>{/if}
 		</div>
+	</Card>
+{/if}
+
+{#if cfg}
+	<Card title="Empfänger-Vorschau (aktueller SAP-/Org-Stand)">
+		<Button variant="secondary" onclick={loadPreview}>Vorschau berechnen</Button>
+		{#if preview}
+			<p class="mt-3 text-sm" style="color: var(--text-primary)">
+				{preview.total.leaders} Führungskräfte werden bewertet, {preview.total.recipients} Personen würden eingeladen
+				({preview.total.without_email} ohne E-Mail → Code-Brief); {preview.total.excluded_leaders} Führungskräfte mit Team &lt; 3 werden nicht bewertet.
+			</p>
+			<table class="mt-2 w-full text-left text-xs" style="color: var(--text-secondary)">
+				<thead><tr><th>Fachbereich</th><th>FK</th><th>Empfänger</th><th>ohne E-Mail</th><th>ausgeschlossen</th></tr></thead>
+				<tbody>
+					{#each Object.entries(preview.by_fachbereich) as [fb, r] (fb)}
+						<tr><td>{fb}</td><td>{r.leaders}</td><td>{r.recipients}</td><td>{r.without_email}</td><td>{r.excluded_leaders}</td></tr>
+					{/each}
+				</tbody>
+			</table>
+		{/if}
 	</Card>
 {/if}

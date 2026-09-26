@@ -56,9 +56,14 @@
 		}
 	}
 
-	function loginWithSso() {
-		const apiBase = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
-		window.location.href = `${apiBase}/auth/oidc/login`;
+	async function loginWithSso() {
+		error = '';
+		try {
+			const r = await api.get<{ url: string }>('/auth/oidc/login');
+			window.location.href = r.url;
+		} catch (e) {
+			error = e instanceof ApiError ? e.message : 'SSO ist nicht verfügbar';
+		}
 	}
 </script>
 

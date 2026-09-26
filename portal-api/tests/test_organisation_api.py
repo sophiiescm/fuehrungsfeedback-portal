@@ -139,7 +139,7 @@ def test_import_schedule_defaults_disabled_and_can_be_updated(client, seeded_use
         headers=headers,
         json={"enabled": True, "cron": "30 3 * * *", "csv_path": "/data/org-import/latest.csv"},
     ).json()
-    assert updated == {"enabled": True, "cron": "30 3 * * *", "csv_path": "/data/org-import/latest.csv"}
+    assert updated == {"enabled": True, "cron": "30 3 * * *", "csv_path": "/data/org-import/latest.csv", "source": "csv"}
 
     persisted = client.get("/organisation/import/schedule", headers=headers).json()
     assert persisted == updated

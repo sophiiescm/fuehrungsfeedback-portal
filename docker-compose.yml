@@ -100,8 +100,18 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
       OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://localhost:5173/auth/callback}
-      SMTP_HOST: mailpit
-      SMTP_PORT: 1025
+      APP_SSO_SECRET: ${APP_SSO_SECRET:-}
+      APP_SSO_ISSUER: ${APP_SSO_ISSUER:-mitarbeiter-app}
+      OIDC_PERSON_CLAIM: ${OIDC_PERSON_CLAIM:-email}
+      OIDC_PERSON_FIELD: ${OIDC_PERSON_FIELD:-email}
+      ODATA_BASE_URL: ${ODATA_BASE_URL:-}
+      ODATA_USER: ${ODATA_USER:-}
+      ODATA_PASSWORD: ${ODATA_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       SMTP_FROM: ${SMTP_FROM:-feedback-portal@example.test}
       AI_PROVIDER: ${AI_PROVIDER:-none}
       AI_BASE_URL: ${AI_BASE_URL:-}

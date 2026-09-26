@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 
 import httpx
@@ -19,12 +20,11 @@ PROMPT = (
 )
 
 
-def summarize(texts: list[str]) -> str | None:
+def _chat(prompt: str, max_tokens: int = 600) -> str | None:
     settings = get_settings()
     provider = settings.ai_provider
-    if provider == "none" or not texts:
+    if provider == "none":
         return None
-    prompt = PROMPT + "\n".join(f"- {t}" for t in texts)
     try:
         if provider == "openai_compatible":
             r = httpx.post(
@@ -39,11 +39,43 @@ def summarize(texts: list[str]) -> str | None:
             r = httpx.post(
                 "https://api.anthropic.com/v1/messages",
                 headers={"x-api-key": settings.ai_api_key or "", "anthropic-version": "2023-06-01"},
-                json={"model": settings.ai_model, "max_tokens": 600, "messages": [{"role": "user", "content": prompt}]},
+                json={"model": settings.ai_model, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]},
                 timeout=30,
             )
             r.raise_for_status()
             return r.json()["content"][0]["text"].strip()
     except Exception:
-        logger.exception("KI-Zusammenfassung fehlgeschlagen")
+        logger.exception("KI-Aufruf fehlgeschlagen")
     return None
+
+
+def summarize(texts: list[str]) -> str | None:
+    if not texts:
+        return None
+    return _chat(PROMPT + "\n".join(f"- {t}" for t in texts))
+
+
+def categorize(texts: list[str]) -> dict[str, str]:
+    """Ordnet (bereits geschwaerzte) Texte festen Kategorien zu. KI nur wenn konfiguriert; die Antwort
+    wird streng gegen die feste Kategorienliste geprueft, sonst Schluesselwort-Fallback je Text."""
+    from app.services import textanalysis
+
+    result = textanalysis.categorize_keywords(texts)
+    if get_settings().ai_provider == "none" or not texts:
+        return result
+    cats = list(textanalysis.CATEGORIES) + [textanalysis.OTHER]
+    prompt = (
+        "Ordne jeden der folgenden anonymisierten Texte genau einer Kategorie aus dieser Liste zu: "
+        + ", ".join(cats) + ". Antworte ausschliesslich mit einem JSON-Array von Kategorienamen in der "
+        "Reihenfolge der Texte, ohne weiteren Text.\n\n" + "\n".join(f"{i + 1}. {t}" for i, t in enumerate(texts))
+    )
+    raw = _chat(prompt, max_tokens=2000)
+    try:
+        arr = json.loads(raw[raw.index("["): raw.rindex("]") + 1]) if raw else []
+    except ValueError:
+        return result
+    if len(arr) == len(texts):
+        for t, c in zip(texts, arr):
+            if c in cats:
+                result[t] = c
+    return result

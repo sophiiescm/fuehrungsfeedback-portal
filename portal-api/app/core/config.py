@@ -33,10 +33,26 @@ class Settings(BaseSettings):
     oidc_client_secret: str | None = None
     oidc_redirect_url: str = "http://localhost:5173/auth/callback"
 
+    oidc_person_claim: str = "email"  # email | preferred_username | upn | employeeid ...
+    oidc_person_field: str = "email"  # email | personalnummer
+
+    # Trusted-App-SSO (Mitarbeiter-App reicht kurzlebige signierte Assertion durch)
+    app_sso_secret: str | None = None  # leer = deaktiviert
+    app_sso_issuer: str = "mitarbeiter-app"
+    app_sso_max_lifetime_seconds: int = 120
+
+    # SuccessFactors / SAP OData
+    odata_base_url: str | None = None
+    odata_user: str | None = None
+    odata_password: str | None = None
+
     # SMTP
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_from: str = "feedback-portal@example.test"
+    smtp_user: str | None = None  # z. B. Exchange Online: smtp.office365.com:587 + STARTTLS
+    smtp_password: str | None = None
+    smtp_starttls: bool = False
 
     # KI-Zusammenfassung
     ai_provider: str = "none"  # none | openai_compatible | anthropic

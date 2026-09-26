@@ -12,7 +12,7 @@ from app.models.round import Participation, ParticipationStatus, Round, RoundSta
 from app.models.survey import SurveyVersion
 from app.schemas.round import RoundCreateIn, RoundDashboardOut, RoundOut, RoundTargetOut
 from app.services import pdf_letters, round_automation
-from app.services.round_lifecycle import RoundLifecycleError, close_round, start_round
+from app.services.round_lifecycle import RoundLifecycleError, close_round, preview_recipients, start_round
 
 router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_role(Role.admin))])
 
@@ -61,6 +61,11 @@ def put_automation(payload: AutomationIn, db: Session = Depends(get_db)) -> dict
 def run_automation_now(db: Session = Depends(get_db)) -> dict:
     created = round_automation.run_automation(db)
     return {"created_round_id": created.id if created else None}
+
+
+@router.get("/preview")
+def recipients_preview(fachbereiche: str | None = None, db: Session = Depends(get_db)) -> dict:
+    return preview_recipients(db, [f for f in fachbereiche.split(",") if f] if fachbereiche else None)
 
 
 @router.post("", response_model=RoundOut)

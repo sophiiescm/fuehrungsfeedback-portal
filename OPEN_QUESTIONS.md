@@ -23,3 +23,10 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 - **NPS / externes Benchmarking:** Annahme: NPS-Frage (0–10) wird in die Beispielumfrage aufgenommen; „extern“ = manuell hinterlegbarer Referenzwert (Branchen-/Vergleichs-NPS), da keine externe Datenquelle bekannt ist.
 - **Wordcloud:** Annahme: nur aus geschwärzten Freitexten, Wörter nur, wenn sie in ≥ 3 verschiedenen Antworten vorkommen (Rückverfolgbarkeit).
 - **Automatisierung der Runden:** Annahme: wiederkehrende Runden (Standard halbjährlich) aus einer Vorlage automatisch anlegen und starten.
+
+## Umsetzungsstand Schritt 4 – offene Punkte für die Fachseite / IT
+1. **Mitarbeiter-App-SSO:** Kann die Mitarbeiter-App eine signierte Assertion (HS256, Geheimnis wird gemeinsam vereinbart, Format siehe ENTSCHEIDUNGEN Nr. 33) erzeugen? Alternative wäre ein OIDC-Login der App als IdP. *Annahme:* Assertion-Variante; Geheimnis über `APP_SSO_SECRET`.
+2. **Entra ID:** Tenant-ID, Client-ID/-Secret, Redirect-URI (`…/auth/callback`) und welcher Claim die Person identifiziert (E-Mail/UPN oder Personalnummer). *Annahme:* `email` = Portal-E-Mail.
+3. **SuccessFactors OData:** Endpoint, technischer User, tatsächliche Feldnamen (Zuordnung ist per `field_map` anpassbar) und Statuswerte für „aktiv". *Annahme:* Standard-Entität `User`.
+4. **Outlook-Versand:** Exchange Online SMTP-AUTH ist oft deaktiviert; Alternative wäre Microsoft Graph (`sendMail`) mit App-Registrierung. *Annahme:* SMTP mit Dienstkonto oder internes Relay.
+5. **KI für Kategorien:** Ohne konfigurierten Provider wird ein Schlüsselwort-Verfahren genutzt (gröber). Freigabe eines Providers durch Datenschutz nötig, da (geschwärzte) Freitexte verarbeitet werden.

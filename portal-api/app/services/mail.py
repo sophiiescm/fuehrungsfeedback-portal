@@ -29,6 +29,10 @@ def send_mail(to_email: str, subject: str, html_body: str) -> bool:
         msg["From"] = settings.smtp_from
         msg["To"] = to_email
         with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+            if settings.smtp_starttls:  # z. B. Exchange Online / Office 365 (Port 587)
+                server.starttls()
+            if settings.smtp_user:
+                server.login(settings.smtp_user, settings.smtp_password or "")
             server.send_message(msg)
         return True
     except Exception:

@@ -21,7 +21,7 @@ from app.models.person import Person
 from app.models.result import Report, ResultAggregate
 from app.models.round import Round, RoundStatus, RoundTarget
 from app.models.survey import Question, QuestionType
-from app.services import ai
+from app.services import ai, textanalysis
 from app.services.limesurvey_client import LimeSurveyClient, LimeSurveyError
 from app.services.notifications import notify_from_template
 from app.services.redaction import build_name_pattern, redact_and_shuffle
@@ -117,6 +117,10 @@ def evaluate_target(db: Session, target: RoundTarget, responses: list[dict], nam
                                    max_value=st.max, mean=st.mean, median=st.median, stddev=st.stddev,
                                    distribution=st.distribution))
 
+    if all_texts:
+        assignment = ai.categorize(all_texts)  # KI mit festen Kategorien, sonst Schluesselwoerter
+        for g in freetext_groups:
+            g["cats"] = [assignment.get(t, textanalysis.OTHER) for t in g["texts"]]
     report.freetext = freetext_groups or None
     report.ai_summary = ai.summarize(all_texts) if all_texts else None
     db.commit()
