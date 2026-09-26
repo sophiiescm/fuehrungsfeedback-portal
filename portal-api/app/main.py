@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, feedbacks, health, notifications, organisation, rounds, surveys
+from app.api.routes import auth, feedbacks, health, notifications, organisation, reports, rounds, surveys
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -51,6 +51,8 @@ app.include_router(auth.router)
 app.include_router(organisation.router)
 app.include_router(surveys.router)
 app.include_router(rounds.router)
+app.include_router(reports.router)
+app.include_router(reports.admin_router)
 app.include_router(feedbacks.router)
 app.include_router(notifications.router)
 app.include_router(notifications.mail_template_router)

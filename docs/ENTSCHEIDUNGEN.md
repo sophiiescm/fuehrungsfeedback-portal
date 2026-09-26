@@ -31,4 +31,8 @@
 
 | 21 | `weasyprint` (PDF-Erzeugung: Serienbriefe Phase 4, Reports Phase 5) wird im Code nur lokal innerhalb der jeweiligen Funktion importiert, nicht auf Modulebene | `weasyprint` braucht native GTK-Bibliotheken (Pango/Cairo/GdkPixbuf), die im Docker-Image via `apt-get` installiert werden, auf der Windows-Entwicklungsmaschine des lokalen venv aber fehlen. Ein Top-Level-Import würde den gesamten Import der betroffenen Module (und damit die lokale Testausführung ausserhalb von Docker) zum Absturz bringen. Tests, die echtes PDF-Rendering pruefen, nutzen `pytest.importorskip("weasyprint")` und laufen damit lokal uebersprungen, aber im Docker-Container (bzw. CI mit den Systembibliotheken) vollstaendig. |
 
+| 22 | Freitexte werden nur geschwärzt + gemischt gespeichert (`report.freetext`) und nur angezeigt, wenn mindestens Schwelle (3) Freitexte vorliegen; Dimensionswerte basieren auf dem Mittel je antwortender Person | Rückschlussschutz: 1-2 Freitexte wären zuordenbar. Dimensions-Statistik pro Person statt gepoolter Items, damit n = Anzahl Antwortende (Schwellenlogik stimmt). |
+| 23 | Reports sind ausschließlich für die bewertete Führungskraft sichtbar (Admins bekommen 404); Admins sehen nur pseudonymisierten Benchmark | CLAUDE.md Nr. 8, Rechtetest in `tests/test_evaluation.py`. Vergleichswerte (Fachbereich/Unternehmen) werden bei < 3 Führungskräften unterdrückt. |
+| 24 | Passlib durch direktes `bcrypt` ersetzt | passlib 1.7.4 ist mit bcrypt 5 inkompatibel (Absturz beim Hashen). |
+
 (Claude Code ergänzt weitere Entscheidungen fortlaufend.)

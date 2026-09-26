@@ -38,6 +38,9 @@ class Report(Base):
     round_target_id: Mapped[int] = mapped_column(ForeignKey("round_target.id"), index=True, unique=True)
     pdf_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    freetext: Mapped[list | None] = mapped_column(JSON, nullable=True)  # geschwaerzt, zufaellig gemischt
+    n_responses: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    suppressed: Mapped[bool] = mapped_column(default=False)  # < Berichtsschwelle
     generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

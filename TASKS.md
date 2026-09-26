@@ -120,28 +120,28 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz (verifiziert):** Demo-Runde (Fachbereich Personal) gegen den echten Stack: 66 Führungskräfte, 65 auswertbar (1 Team < 3 ohne Umfrage/Einladung), 235 Teilnahmen, je Team eine LimeSurvey-Kopie, 147 Mails in Mailpit, Polling-Abgleich setzt Status, Webhook-HMAC getestet (59 Backend-Tests grün, 1 lokal übersprungen: PDF, läuft im Container). Offen/nicht live geprüft: Plugin-Aktivierung in der LimeSurvey-UI (PHP-Syntax und Events gegen Quellcode geprüft), echte Umfrage-Abgabe per Browser mit Webhook. Testrunde mit Seed-Daten starten. Mails erscheinen in Mailpit. Teilnahme per Token und per Personalnummer + Code funktioniert. Eine Doppelteilnahme ist unmöglich. Erinnerungen gehen nur an Offene.
 
 ## Phase 5 – Auswertung, Reports, Benchmarking, Trend, KI
-- [ ] Nach dem Schließen:
+- [x] Nach dem Schließen:
   - Antworten exportieren (`export_responses`, JSON)
   - nach `leader_code` gruppieren
   - Statistik pro Frage und Dimension (n, min, max, Mittelwert, Median, Standardabweichung, Verteilung)
   - Schwelle ≥ 3 durchsetzen
-- [ ] Schwärzung der Freitexte (Namen aus Org-Daten, E-Mail, Telefon, Personalnummern) und zufällige Reihenfolge
-- [ ] KI-Provider-Interface (`none` | `openai_compatible` | `anthropic`)
+- [x] Schwärzung der Freitexte (Namen aus Org-Daten, E-Mail, Telefon, Personalnummern) und zufällige Reihenfolge
+- [x] KI-Provider-Interface (`none` | `openai_compatible` | `anthropic`)
   - Zusammenfassung nach Themen, keine Zitate
   - Timeout und Fehler führen zu „keine Zusammenfassung“, nicht zum Abbruch
-- [ ] Report für die Führungskraft:
+- [x] Report für die Führungskraft:
   - Portal-Ansicht mit Charts (Balken je Dimension, Verteilung, Vergleich Fachbereich/Unternehmen, Trend)
   - PDF-Export (WeasyPrint)
   - Versand je nach Kanal
-- [ ] Trend-Monitoring: Verlauf pro FK über alle Runden (Linienchart), Veränderung zur Vorrunde
-- [ ] Admin-Benchmarking:
+- [x] Trend-Monitoring: Verlauf pro FK über alle Runden (Linienchart), Veränderung zur Vorrunde
+- [x] Admin-Benchmarking:
   - innerhalb eines Fachbereichs (pseudonymisiert)
   - fachbereichsübergreifend
   - Filter nach Runde
   - Unterdrückung kleiner Gruppen
-- [ ] Die Sicht der Führungskraft ist nur auf eigene Reports beschränkt (Rechtetest!)
+- [x] Die Sicht der Führungskraft ist nur auf eigene Reports beschränkt (Rechtetest!)
 
-**Akzeptanz:** Aus den historischen Seed-Runden entstehen Reports. Eine FK mit 2 Antworten bekommt keinen Report, sondern einen Hinweis. Trend und Benchmark werden angezeigt. Die Statistik-Tests sind grün.
+**Akzeptanz (verifiziert):** 2 historische Seed-Runden (je 518 FK, ca. 5 % mit nur 2 Antworten → kein Report) laufen durch dieselbe Auswertungslogik; FK-Report mit Vergleich Fachbereich/Unternehmen/Vorrunde, Trend-Chart, PDF (Container), Benchmark pseudonymisiert (FK-A…), Gruppen < 3 unterdrückt; Rechtetest: nur die bewertete FK sieht den Report (auch Admins nicht). 70 Backend-Tests grün. Nicht live geprüft: `evaluate_round` gegen echte LimeSurvey-Antworten (Export-Format geprüft, Berechnung getestet), KI-Provider (nur `none` getestet), Report-Versand als PDF-Anhang (nur Portal-Benachrichtigung + Mail ohne Anhang). Aus den historischen Seed-Runden entstehen Reports. Eine FK mit 2 Antworten bekommt keinen Report, sondern einen Hinweis. Trend und Benchmark werden angezeigt. Die Statistik-Tests sind grün.
 
 ## Phase 6 – Härtung, Doku, Übergabe
 - [ ] Audit-Log für Admin-Aktionen, Rate-Limiting für den Code-Login, Security-Header, CSRF
