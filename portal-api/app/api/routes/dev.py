@@ -1,12 +1,6 @@
-"""Nur fuer die Entwicklung (APP_ENV=dev): Schnellzugriff auf typische Ansichten und Simulator
-der Mitarbeiter-App (stellt Trusted-App-SSO-Assertions aus). In Produktion antworten alle Routen mit 404."""
-
-import time
-import uuid
+"""Nur fuer die Entwicklung (APP_ENV=dev): Schnellzugriff auf typische Ansichten. In Produktion antworten alle Routen mit 404."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from jose import jwt
-from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -51,27 +45,6 @@ def personas(db: Session = Depends(get_db)) -> list[dict]:
         _persona(admin, "Admin (HR)", "Verwaltung, Runden, Auswertung"),
         _persona(fk, "Führungskraft", "Report, Trend, Maßnahmen"),
         _persona(ma, "Mitarbeiter", "Feedback abgeben, Maßnahmen des Teams"),
-        _persona(prod, "Produktion ohne E-Mail", "Code-Brief bzw. Mitarbeiter-App-SSO"),
+        _persona(prod, "Produktion ohne E-Mail", "Code-Brief-Anmeldung"),
     ]
     return [x for x in out if x]
-
-
-class AssertionIn(BaseModel):
-    personalnummer: str
-
-
-@router.post("/app-assertion", dependencies=[Depends(_dev_only)])
-def app_assertion(payload: AssertionIn, db: Session = Depends(get_db)) -> dict:
-    """Simuliert die Mitarbeiter-App: erzeugt die signierte Einmal-Assertion fuer Trusted-App-SSO."""
-    s = get_settings()
-    if not s.app_sso_secret:
-        raise HTTPException(status.HTTP_409_CONFLICT, "APP_SSO_SECRET ist nicht gesetzt")
-    person = db.execute(select(Person).where(Person.personalnummer == payload.personalnummer, Person.aktiv.is_(True))).scalar_one_or_none()
-    if person is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Person nicht gefunden")
-    now = int(time.time())
-    token = jwt.encode(
-        {"iss": s.app_sso_issuer, "sub": person.personalnummer, "iat": now, "exp": now + 60, "jti": uuid.uuid4().hex},
-        s.app_sso_secret, algorithm="HS256",
-    )
-    return {"assertion": token, "portal_url": f"{s.portal_public_url}/sso#assertion={token}"}

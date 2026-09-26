@@ -4,6 +4,7 @@
 	import { auth } from '$lib/stores/auth.svelte';
 	import { api } from '$lib/api/client';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import UserMenu from '$lib/components/UserMenu.svelte';
 
 	let { children } = $props();
 	let loading = $state(true);
@@ -51,7 +52,8 @@
 	</div>
 {:else}
 	<Sidebar />
-	<main class="app-main mx-auto min-h-screen max-w-6xl p-4 lg:ml-[calc(var(--sidebar-width)+2rem)] lg:max-w-none lg:p-8">
+	<UserMenu />
+	<main class="app-main mx-auto min-h-screen max-w-6xl p-4 lg:ml-[calc(var(--sidebar-width)+2rem)] lg:max-w-none lg:p-8 lg:pt-20">
 		{@render children()}
 	</main>
 {/if}

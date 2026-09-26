@@ -26,7 +26,6 @@ services:
   portal-api:
     ports: !reset []
     environment:
-      APP_SSO_SECRET: ${APP_SSO_SECRET:?APP_SSO_SECRET setzen}
       APP_ENV: prod
 
   # Interne Dienste nicht mehr direkt nach aussen veroeffentlichen

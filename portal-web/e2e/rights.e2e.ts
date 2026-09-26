@@ -24,16 +24,6 @@ test('Login-Seite bietet Entwickler-Schnellzugriff für alle Ansichten', async (
 	await expect(page).toHaveURL(/dashboard/);
 });
 
-test('Mitarbeiter-App-Simulator führt per Trusted-App-SSO ohne Login ins Portal', async ({ page }) => {
-	await page.goto('/dev/mitarbeiter-app');
-	await expect(page.getByRole('combobox')).toHaveValue(/P\d+/);
-	await page.getByRole('button', { name: /Führungsfeedback/ }).click();
-	await expect(page).toHaveURL(/feedbacks/);
-	await expect(page.getByRole('heading', { name: 'Meine Feedbacks' })).toBeVisible();
-	// Die Assertion darf nicht in der URL zurückbleiben
-	expect(page.url()).not.toContain('assertion');
-});
-
 test('Einstellungen: Rollen und Rechte sind verwaltbar', async ({ page }) => {
 	await loginAs(page, 'P00001', '/einstellungen');
 	await expect(page.getByRole('heading', { name: /Nutzer & Rechte/ })).toBeVisible();

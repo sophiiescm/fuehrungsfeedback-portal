@@ -84,5 +84,5 @@ Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten 
 - Nutzer & Rechte (Einstellungen): eigene Zugriffsrollen mit fünf Rechten, Admins mit unterschiedlichen Befugnissen (z. B. „Nur Auswertung“), serverseitig erzwungen, 8 neue Tests.
 - Umfrage-Editor: jede Likert-Stufe einzeln beschriftbar (4–7 Stufen), Auswahlfragen mit einzelnen Optionsfeldern, Mehrfachantworten als Checkboxen.
 - Mindestteamgröße auch in „Meine Feedbacks“ erzwungen; Erklärtext dort entfernt.
-- Dev: Schnellzugriff auf alle Ansichten, „Ansicht wechseln“, Mitarbeiter-App-Simulator (Trusted-App-SSO).
+- Dev: Schnellzugriff auf alle Ansichten, „Ansicht wechseln“. Angemeldete Person rechts oben (Benutzermenü). Mitarbeiter-App-Simulator wieder entfernt.
 - Tests: 105 Backend, 12 Playwright. Neue Rückfragen: `OPEN_QUESTIONS.md` („Neu: Rechte, Skalen, Mindestteamgröße“).

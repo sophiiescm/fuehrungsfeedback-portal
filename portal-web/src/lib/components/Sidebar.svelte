@@ -108,10 +108,7 @@
 	</div>
 
 	<div class="flex flex-col gap-3 border-t px-2 pt-4" style="border-color: var(--border-subtle)">
-		<div class="text-sm" style="color: var(--text-secondary)">{auth.user?.full_name ?? ''}</div>
-		<DevSwitcher />
-		<ThemeToggle />
-		<button onclick={() => auth.logout()} class="text-left text-sm" style="color: var(--text-muted)">Abmelden</button>
+		<p class="text-xs" style="color: var(--text-muted)">Angemeldet als {auth.user?.full_name ?? ''} – Menü oben rechts.</p>
 	</div>
 </aside>
 

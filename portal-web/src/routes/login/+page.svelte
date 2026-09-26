@@ -114,7 +114,6 @@
 									<span class="text-xs" style="color: var(--text-secondary)">{p.full_name} · {p.note}</span>
 								</button>
 							{/each}
-							<a href="/dev/mitarbeiter-app" class="glass-surface rounded-[var(--radius-sm)] px-3 py-3 text-center text-sm" style="color: var(--accent)">📱 Mitarbeiter-App simulieren (Trusted-App-SSO)</a>
 						</div>
 						<details class="mt-3 text-xs" style="color: var(--text-muted)">
 							<summary class="cursor-pointer py-1">Weitere Personen</summary>
