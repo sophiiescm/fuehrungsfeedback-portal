@@ -43,7 +43,7 @@ test('Führungskraft sieht Reports, aber keine Admin-Bereiche', async ({ page })
 	await expect(nav(page, 'Meine Reports / Trend')).toBeVisible();
 	await expect(nav(page, 'Umfrage gestalten')).toHaveCount(0);
 	await page.goto('/reports');
-	await expect(page.getByRole('heading', { name: 'Meine Reports / Trend' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Mein Feedback-Report' })).toBeVisible();
 });
 
 test('Mitarbeiter sieht nur Dashboard, Feedbacks, Benachrichtigungen', async ({ page }) => {

@@ -114,7 +114,7 @@ body {
 }
 @media (min-width: 1024px) {
 	.app-main {
-		padding-top: 2rem;
+		padding-top: 5rem; /* Platz fuer das Benutzermenue rechts oben */
 		padding-bottom: 2rem;
 	}
 }
