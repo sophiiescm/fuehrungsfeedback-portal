@@ -191,7 +191,7 @@
 		transferMessage = '';
 		try {
 			const result = await surveysApi.transfer(detail.id);
-			transferMessage = `Übertragen (LimeSurvey-ID ${result.limesurvey_template_sid}).`;
+			transferMessage = `Veröffentlicht – bereit für Befragungsrunden.`;
 			await load();
 		} catch (e) {
 			transferMessage = e instanceof ApiError ? e.message : 'Übertragung fehlgeschlagen';
@@ -358,7 +358,7 @@
 		<div class="flex gap-2">
 			<Button variant="secondary" onclick={() => (showPreview = !showPreview)}>{showPreview ? 'Bearbeiten' : 'Vorschau'}</Button>
 			{#if isLocked}<Button variant="primary" onclick={cloneVersion}>Als neue Version bearbeiten</Button>{/if}
-			<Button variant="primary" onclick={transfer} disabled={transferring}>An LimeSurvey übertragen</Button>
+			<Button variant="primary" onclick={transfer} disabled={transferring}>Veröffentlichen</Button>
 		</div>
 	</div>
 

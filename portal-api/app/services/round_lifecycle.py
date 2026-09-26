@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import random
 import string
-from datetime import date, datetime, timezone
+from datetime import timedelta, date, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -70,10 +70,13 @@ def start_round(db: Session, round_: Round) -> dict:
         raise RoundLifecycleError("Runde kann nur aus 'entwurf' oder 'geplant' gestartet werden")
 
     template_sid = round_.survey_version.limesurvey_template_sid
-    if not template_sid:
-        raise RoundLifecycleError(
-            "Die Umfrageversion dieser Runde wurde noch nicht nach LimeSurvey übertragen"
-        )
+    if not template_sid:  # automatisch veroeffentlichen, statt den Start zu blockieren
+        from app.services.survey_publish import PublishError, publish_version
+
+        try:
+            template_sid = publish_version(db, round_.survey_version)
+        except PublishError as exc:
+            raise RoundLifecycleError(f"Fragebogen konnte nicht veröffentlicht werden: {exc}") from exc
 
     settings = get_settings()
 
@@ -257,6 +260,33 @@ def send_due_reminders(db: Session, round_: Round) -> int:
         context["days_left"] = days_before_end
         sent_ok = notify_from_template(db, person, "reminder", context, round_id=round_.id)
         if sent_ok:
+            sent += 1
+    return sent
+
+
+def send_reminders_now(db: Session, round_: Round) -> int:
+    """Manuelle Erinnerung (Admin-Button) an alle, die noch nicht teilgenommen haben.
+    Hoechstens eine Erinnerung je Person und 24 h."""
+    if round_.status != RoundStatus.offen:
+        raise RoundLifecycleError("Erinnerungen sind nur bei offenen Runden möglich")
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    open_participations = db.execute(
+        select(Participation).where(Participation.round_id == round_.id, Participation.status == ParticipationStatus.offen)
+    ).scalars().all()
+    sent = 0
+    for participation in open_participations:
+        person = db.get(Person, participation.person_id)
+        recent = db.execute(
+            select(Notification.id).where(
+                Notification.person_id == person.id, Notification.round_id == round_.id,
+                Notification.type == "reminder", Notification.created_at >= since,
+            )
+        ).first()
+        if recent:
+            continue
+        context = _feedback_link_context(round_, participation)
+        context["days_left"] = max(0, (round_.end_at.date() - date.today()).days)
+        if notify_from_template(db, person, "reminder", context, round_id=round_.id):
             sent += 1
     return sent
 

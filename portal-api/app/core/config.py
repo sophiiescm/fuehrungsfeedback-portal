@@ -60,6 +60,12 @@ class Settings(BaseSettings):
     ai_api_key: str | None = None
     ai_model: str | None = None
 
+    # Loeschfristen (Tage), siehe app/services/retention.py
+    retention_survey_days: int = 90
+    retention_notification_days: int = 180
+    retention_login_code_days: int = 90
+    retention_audit_days: int = 365
+
     access_token_expire_minutes: int = 60 * 8
 
 

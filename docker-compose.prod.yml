@@ -1,0 +1,40 @@
+# Produktions-Erweiterung: HTTPS per Caddy (automatische Zertifikate).
+# Start:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Voraussetzung: DNS-Eintraege fuer PORTAL_DOMAIN, API_DOMAIN und SURVEY_DOMAIN zeigen auf diesen Server,
+# Ports 80/443 sind frei. In .env setzen: APP_ENV=prod (deaktiviert Dev-Login), PORTAL_PUBLIC_URL,
+# LIMESURVEY_URL_PUBLIC, VITE_API_BASE_URL=https://<API_DOMAIN>, sichere Secrets (siehe docs/BETRIEB.md).
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PORTAL_DOMAIN: ${PORTAL_DOMAIN:?PORTAL_DOMAIN setzen}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN setzen}
+      SURVEY_DOMAIN: ${SURVEY_DOMAIN:?SURVEY_DOMAIN setzen}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - portal-web
+      - portal-api
+      - limesurvey
+
+  # Interne Dienste nicht mehr direkt nach aussen veroeffentlichen
+  portal-web:
+    ports: !reset []
+  portal-api:
+    ports: !reset []
+  limesurvey:
+    ports: !reset []
+  postgres:
+    ports: !reset []
+  mailpit:
+    profiles: ["dev-only"]
+
+volumes:
+  caddy_data:
+  caddy_config:

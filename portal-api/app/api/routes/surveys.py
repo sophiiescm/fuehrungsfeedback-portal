@@ -23,6 +23,7 @@ from app.schemas.survey import (
 )
 from app.services.limesurvey_client import LimeSurveyClient, LimeSurveyError
 from app.services.survey_export import build_tsv
+from app.services.survey_publish import PublishError, publish_version
 from app.services.survey_versioning import (
     VersionLockedError,
     clone_as_new_version,
@@ -264,26 +265,9 @@ def clone_version(version_id: int, db: Session = Depends(get_db)) -> SurveyVersi
 @router.post("/versions/{version_id}/transfer", response_model=TransferResultOut)
 def transfer_to_limesurvey(version_id: int, db: Session = Depends(get_db)) -> TransferResultOut:
     version = _get_version_or_404(db, version_id)
-    if not version.questions:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Umfrageversion hat noch keine Fragen")
-
-    tsv = build_tsv(version)
-    data_b64 = base64.b64encode(tsv.encode("utf-8")).decode("ascii")
-
-    client = LimeSurveyClient()
     try:
-        if version.limesurvey_template_sid:
-            try:
-                client.delete_survey(version.limesurvey_template_sid)
-            except LimeSurveyError:
-                pass  # bereits geloescht oder nie erfolgreich angelegt -- einfach neu anlegen
-        title = f"{version.survey_template.name} v{version.version_number}"
-        new_sid = client.import_survey(data_b64, import_type="txt", survey_name=title)
-    except LimeSurveyError as exc:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Übertragung nach LimeSurvey fehlgeschlagen: {exc}") from exc
-    finally:
-        client.close()
-
-    version.limesurvey_template_sid = new_sid
-    db.commit()
+        new_sid = publish_version(db, version)
+    except PublishError as exc:
+        code = status.HTTP_400_BAD_REQUEST if "keine Fragen" in str(exc) else status.HTTP_502_BAD_GATEWAY
+        raise HTTPException(code, str(exc)) from exc
     return TransferResultOut(limesurvey_template_sid=new_sid)

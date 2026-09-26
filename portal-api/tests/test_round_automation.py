@@ -58,3 +58,16 @@ def test_recipient_preview(client, seeded_users, db_session):
     db_session.commit()
     r = client.get("/rounds/preview", headers=h).json()
     assert r["total"]["leaders"] == 1 and r["total"]["recipients"] == 3 and r["total"]["without_email"] == 1
+
+
+def test_manual_reminder_and_exports_require_admin_and_work(client, seeded_users, db_session):
+    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
+    v = _version(db_session)
+    r = Round(name="R", survey_version_id=v.id, status=RoundStatus.geplant,
+              start_at=datetime(2026, 1, 1, tzinfo=timezone.utc), end_at=datetime(2026, 2, 1, tzinfo=timezone.utc))
+    db_session.add(r)
+    db_session.commit()
+    assert client.post(f"/rounds/{r.id}/remind", headers=h).status_code == 409  # nur bei offenen Runden
+    csv = client.get(f"/rounds/{r.id}/response-rate.csv", headers=h)
+    assert csv.status_code == 200 and "fachbereich;eingeladen" in csv.text
+    assert client.get(f"/benchmark/export.csv?round_id={r.id}", headers=h).status_code == 200

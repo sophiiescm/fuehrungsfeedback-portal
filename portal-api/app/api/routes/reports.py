@@ -241,6 +241,25 @@ def distribute(round_id: int, db: Session = Depends(get_db)) -> dict:
     return {"sent": evaluation.distribute_reports(db, round_)}
 
 
+@admin_router.get("/benchmark/export.csv")
+def benchmark_export(round_id: int, db: Session = Depends(get_db)) -> Response:
+    """Mittelwerte je Fachbereich und Dimension (nur Gruppen >= Schwelle, keine Personen)."""
+    data = benchmark(round_id, None, db)
+    dims = sorted({k for g in data.values() if not g.get("suppressed") and isinstance(g.get("leaders"), list) for m in g["leaders"] for k in m["dimensions"]})
+    lines = ["fachbereich;fuehrungskraefte;" + ";".join(dims)]
+    for fb, g in sorted(data.items()):
+        if fb == "_gesamt" or g.get("suppressed") or not isinstance(g.get("leaders"), list):
+            continue
+        ms = [m["dimensions"] for m in g["leaders"]]
+        cells = []
+        for d in dims:
+            vals = [m[d] for m in ms if d in m]
+            cells.append(f"{sum(vals) / len(vals):.2f}".replace(".", ",") if vals else "")
+        lines.append(f"{fb};{len(ms)};" + ";".join(cells))
+    return Response("\ufeff" + "\n".join(lines) + "\n", media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f"attachment; filename=benchmark-{round_id}.csv"})
+
+
 @admin_router.get("/benchmark")
 def benchmark(round_id: int, fachbereich: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Pseudonymisiertes Benchmarking (FK-A, FK-B, ...). Gruppen mit weniger als

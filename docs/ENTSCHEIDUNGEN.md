@@ -65,3 +65,17 @@ Eigene schlanke Implementierung (httpx + python-jose statt Session-Middleware): 
 - Kategorien: bei der Auswertung einmalig gespeichert (`freetext[].cats`); KI-Provider (falls konfiguriert) darf nur aus fester Kategorienliste wählen, Ausgabe wird validiert, sonst Schlüsselwort-Fallback. Anzeige nur ab ≥ 3 Texten je Kategorie.
 - Outlook/Exchange Online: SMTP mit STARTTLS + Login (`SMTP_HOST=smtp.office365.com`, Port 587, `SMTP_STARTTLS=true`). Mailpit bleibt nur Test.
 - Empfängervorschau `GET /rounds/preview`: Zahlen je Fachbereich, ohne E-Mail, ausgeschlossene FK – aus dem aktuellen Org-Stand.
+
+## Nr. 36 – Mobile-first-Bedienung und Mitarbeiter-Sicht
+- Navigation: ab 1024 px Sidebar, darunter (Handy/iPad) Tab-Leiste unten mit max. 4 Hauptpunkten + „Mehr“; iOS-Safe-Areas, Touch-Ziele ≥ 44 px, 16-px-Eingaben (kein Zoom). PWA-Manifest (Icon als SVG; PNG-Icons für ältere iOS-Versionen offen).
+- Mitarbeitende: Vertrauens-Hinweis vor dem Feedback, „ca. 5 Minuten“, Fristen-Hinweis, Dashboard mit einer Hauptaktion. Rollenbasierte Dashboards (Admin: Rücklauf/Erinnern, FK: Report, alle: Maßnahmen).
+- LimeSurvey: Theme `feedbackportal` (Kinder-Theme von fruity_twentythree) mit Kachel-Antworten; Registrierung per SQL im `limesurvey-init` (Plugin-Import war unzuverlässig), Fortschrittsanzeige an. Format bleibt „Gruppe für Gruppe“ (eine Dimension pro Seite) – hält den Lasttest gültig und die Seitenzahl klein; Skalen-Zwischenstufen werden mit Zahlen beschriftet.
+
+## Nr. 37 – Maßnahmen („Was hat sich getan?“)
+Führungskräfte legen Maßnahmen an (Vorschläge aus den drei schwächsten Dimensionen des eigenen Reports), Status geplant/in Arbeit/erledigt, optional für das Team sichtbar. Die Teamsicht zeigt nur die Maßnahmen der direkten Führungskraft. Keine Antworten/Freitexte in Maßnahmen; Text stammt allein von der Führungskraft.
+
+## Nr. 38 – Runden-Assistent, Veröffentlichen, HR-Steuerung
+Assistent in 4 Schritten (Fragebogen, Zeitraum, Empfänger-Vorschau, Bestätigen). „An LimeSurvey übertragen“ heißt jetzt „Veröffentlichen“ und passiert beim Rundenstart automatisch, falls noch nicht geschehen. Admin: „Erinnerung an alle Offenen“ (max. 1 pro Person/24 h, nur Nicht-Teilnehmende), Rücklauf-Balken je Fachbereich (nur Zahlen), CSV-Exporte (Rücklauf, Benchmark ohne unterdrückte Gruppen), Admin-Rolle im Portal vergeben.
+
+## Nr. 39 – Betrieb und DSGVO
+Caddy-HTTPS-Override (`docker-compose.prod.yml`), Backup-Skript, automatische Löschfristen inkl. Löschen der LimeSurvey-Rohantworten 90 Tage nach Rundenabschluss (Datenminimierung; Aggregate/Reports bleiben). Details: `docs/BETRIEB.md`.

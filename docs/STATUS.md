@@ -70,3 +70,12 @@ Fertig und getestet (93 Backend-Tests, `npm run check` sauber):
 - **Anbindungen:** `ODataOrgSource` (SuccessFactors) nutzbar im nächtlichen Import, Outlook/Exchange-SMTP (STARTTLS+Login).
 Nur gegen Mocks getestet (echte Systeme fehlen): Entra ID, SuccessFactors, Exchange Online, KI-Kategorisierung – siehe `OPEN_QUESTIONS.md`.
 Bekannt: `tests/test_rounds.py::test_leader_code_is_not_derived_from_personalnummer` ist selten flaky (Zufallscode). Demo-Daten wurden nicht neu gesät; für NPS/Auswahl-Demo `docker compose down -v` und Seed neu ausführen.
+
+## Nachtrag 2: Mobile Bedienung, Mitarbeiter-Sicht, Maßnahmen, Betrieb
+Fertig und getestet (97 Backend-Tests, 8 Playwright-Tests inkl. iPhone-/iPad-Viewport mit Screenshots in `portal-web/e2e/screens/`):
+- **Mobil/Tablet:** Tab-Leiste unten (< 1024 px), Sidebar darauf ab Desktop, iOS-Safe-Areas, PWA-Manifest; LimeSurvey-Theme `feedbackportal` mit großen Antwort-Kacheln und Fortschrittsanzeige.
+- **Mitarbeiter:** Vertrauens-Hinweis, klare Karten mit Frist, rollenbasiertes Dashboard.
+- **Maßnahmen** („Was hat sich getan?“): Führungskräfte legen Maßnahmen an, Team sieht die freigegebenen.
+- **Admin:** Runden-Assistent (4 Schritte), Veröffentlichen automatisch beim Start, „Erinnerung an alle Offenen“, Rücklauf-Balken, CSV-Exporte, Admin-Rolle im Portal vergeben.
+- **Betrieb:** `docker-compose.prod.yml` (HTTPS/Caddy), `scripts/backup.sh`, automatische Löschfristen – siehe `docs/BETRIEB.md`.
+Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten Domains, Lasttest nach Theme-Änderung (Format „Gruppe für Gruppe“ unverändert). Offene Rückfragen: `OPEN_QUESTIONS.md` (Abschnitt „Neu: Mobile Bedienung …“).

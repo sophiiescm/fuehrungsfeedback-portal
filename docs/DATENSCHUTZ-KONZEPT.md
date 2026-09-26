@@ -55,7 +55,7 @@ aggregierte Reports; HR sieht Rücklauf, Benchmarks und Trends. Ca. 1.900 Person
 | Freitexte (geschwärzt) | wie Reports |
 | Stammdaten | Deaktivierung bei Ausscheiden (SAP-Sync); Löschung/Pseudonymisierung nach Fristen des Personalwesens |
 | Audit-Log | 12 Monate |
-Ein automatischer Löschjob ist **noch nicht implementiert** (siehe `docs/STATUS.md`).
+Ein automatischer Löschjob ist **implementiert** (täglich 03:30; Rohantworten 90 Tage, Benachrichtigungen 180, Login-Codes 90, Audit 365 Tage, per ENV änderbar, siehe `docs/BETRIEB.md`). Teilnahmestatus, Aggregate/Reports und Stammdaten werden noch nicht automatisch gelöscht (nach Abstimmung mit dem Betriebsrat ergänzen).
 
 ## 5. Offene Punkte für Betriebsrat/DSB
 Rechtsgrundlage und Betriebsvereinbarung; Schwellenwert (≥ 3 vs. höher); Freigabe KI; Löschfristen; Auftragsverarbeitung (Hosting, ggf. KI-Anbieter);

@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
-	import Table from '$lib/components/Table.svelte';
 	import { organisationApi, importApi, type PersonListItem, type ImportDiff, type OrgTreeNode } from '$lib/api/organisation';
 
 	type Tab = 'personen' | 'import' | 'organigramm';
@@ -36,6 +35,11 @@
 		fachbereiche = await organisationApi.listFachbereiche();
 		await loadPersons();
 	});
+
+	async function toggleAdmin(id: number, isAdmin: boolean) {
+		await organisationApi.setAdminRole(id, isAdmin);
+		await loadPersons();
+	}
 
 	// --- Import ---
 	let selectedFile = $state<File | null>(null);
@@ -165,17 +169,22 @@
 			<Button variant="secondary" onclick={loadPersons}>Suchen</Button>
 		</div>
 
-		<Table
-			columns={[
-				{ key: 'personalnummer', label: 'Personalnummer' },
-				{ key: 'full_name', label: 'Name' },
-				{ key: 'fachbereich', label: 'Fachbereich' },
-				{ key: 'roles', label: 'Rollen', render: (r) => (r.roles as string[]).join(', ') },
-				{ key: 'email', label: 'E-Mail', render: (r) => (r.email as string) ?? '—' }
-			]}
-			rows={persons as unknown as Record<string, unknown>[]}
-			emptyText={loadingPersons ? 'Lädt…' : 'Keine Personen gefunden.'}
-		/>
+		<ul class="flex flex-col gap-2">
+			{#each persons as p (p.personalnummer)}
+				{@const isAdmin = (p.roles as string[]).includes('admin')}
+				<li class="glass-surface flex flex-wrap items-center justify-between gap-2 px-4 py-3" style="border-radius: var(--radius-md)">
+					<div>
+						<p style="color: var(--text-primary)">{p.full_name} <span class="text-xs" style="color: var(--text-muted)">· {p.personalnummer}</span></p>
+						<p class="text-xs" style="color: var(--text-secondary)">{p.fachbereich ?? '—'} · {p.email ?? 'keine E-Mail (Code-Brief)'}</p>
+						<p class="mt-1 flex flex-wrap gap-1">
+							{#each p.roles as r}<span class="rounded-full px-2 py-0.5 text-[11px]" style="background: {r === 'admin' ? 'var(--accent)' : 'var(--surface-glass-strong)'}; color: {r === 'admin' ? 'var(--accent-contrast)' : 'var(--text-secondary)'}">{r}</span>{/each}
+						</p>
+					</div>
+					<Button variant={isAdmin ? 'secondary' : 'primary'} onclick={() => toggleAdmin(p.id, !isAdmin)}>{isAdmin ? 'Admin entziehen' : 'Zum Admin machen'}</Button>
+				</li>
+			{/each}
+			{#if persons.length === 0}<li class="text-sm" style="color: var(--text-secondary)">{loadingPersons ? 'Lädt…' : 'Keine Personen gefunden.'}</li>{/if}
+		</ul>
 		<p class="mt-2 text-xs" style="color: var(--text-muted)">{total} Treffer</p>
 	</Card>
 {:else if tab === 'import'}

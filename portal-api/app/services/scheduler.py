@@ -101,6 +101,20 @@ def run_round_lifecycle_tick() -> None:
         db.close()
 
 
+def run_retention_job() -> None:
+    from app.services.retention import run_retention
+
+    db = SessionLocal()
+    try:
+        result = run_retention(db)
+        if any(result.values()):
+            logger.info("Datenminimierung: %s", result)
+    except Exception:
+        logger.exception("Datenminimierung fehlgeschlagen")
+    finally:
+        db.close()
+
+
 def start_scheduler() -> BackgroundScheduler:
     global _scheduler
     scheduler = BackgroundScheduler()
@@ -111,6 +125,7 @@ def start_scheduler() -> BackgroundScheduler:
         db.close()
     _apply_schedule(scheduler, config)
     scheduler.add_job(run_round_lifecycle_tick, IntervalTrigger(minutes=15), id=ROUND_LIFECYCLE_JOB_ID)
+    scheduler.add_job(run_retention_job, CronTrigger(hour=3, minute=30), id="retention")
     scheduler.start()
     _scheduler = scheduler
     return scheduler

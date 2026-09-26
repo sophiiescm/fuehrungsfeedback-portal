@@ -30,3 +30,11 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 3. **SuccessFactors OData:** Endpoint, technischer User, tatsächliche Feldnamen (Zuordnung ist per `field_map` anpassbar) und Statuswerte für „aktiv". *Annahme:* Standard-Entität `User`.
 4. **Outlook-Versand:** Exchange Online SMTP-AUTH ist oft deaktiviert; Alternative wäre Microsoft Graph (`sendMail`) mit App-Registrierung. *Annahme:* SMTP mit Dienstkonto oder internes Relay.
 5. **KI für Kategorien:** Ohne konfigurierten Provider wird ein Schlüsselwort-Verfahren genutzt (gröber). Freigabe eines Providers durch Datenschutz nötig, da (geschwärzte) Freitexte verarbeitet werden.
+
+## Neu: Mobile Bedienung, Maßnahmen, Betrieb – Annahmen und Rückfragen
+1. **Mitarbeiter-Sicht:** Annahme: „ca. 5 Minuten“ als fester Text (Fragebogen mit 26 Fragen). Soll die Dauer aus der Fragenzahl berechnet werden? Sollen Texte zweisprachig (z. B. EN/TR/PL) angeboten werden? (Aufwand: Übersetzungen für Portal + LimeSurvey-Sprachen.)
+2. **Maßnahmen:** Annahme: Führungskräfte dürfen Maßnahmen für ihr Team veröffentlichen; keine Freigabe durch HR. Abstimmung mit Betriebsrat/HR nötig, ob Maßnahmen für Vorgesetzte oder HR einsehbar sein sollen (aktuell nein).
+3. **Löschfristen:** Annahme 90 Tage für LimeSurvey-Rohantworten nach Rundenende, 180 Tage Benachrichtigungen, 365 Tage Audit-Log. Bitte Datenschutz/Betriebsrat prüfen (`docs/BETRIEB.md`).
+4. **HTTPS/Hosting:** Welche Domains und welche Infrastruktur (eigener Server, Azure, Kubernetes)? Annahme: ein Docker-Host mit Caddy. Zertifikate ggf. über die Firmen-CA statt Let's Encrypt.
+5. **PWA/Push:** Home-Bildschirm-Icon ist vorhanden. Echte Push-Erinnerungen setzen die Mitarbeiter-App-Anbindung (Push-API der App) voraus – offen.
+6. **Testgeräte:** Mobile Darstellung wurde in der Browser-Emulation (375×812) geprüft; ein Test auf echten iPhones/iPads und Kiosk-Geräten steht aus.

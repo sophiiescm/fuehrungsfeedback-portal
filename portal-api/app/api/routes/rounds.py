@@ -12,7 +12,9 @@ from app.models.round import Participation, ParticipationStatus, Round, RoundSta
 from app.models.survey import SurveyVersion
 from app.schemas.round import RoundCreateIn, RoundDashboardOut, RoundOut, RoundTargetOut
 from app.services import pdf_letters, round_automation
-from app.services.round_lifecycle import RoundLifecycleError, close_round, preview_recipients, start_round
+from app.services.round_lifecycle import (
+    RoundLifecycleError, close_round, preview_recipients, send_reminders_now, start_round,
+)
 
 router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_role(Role.admin))])
 
@@ -127,6 +129,28 @@ def close_round_endpoint(round_id: int, db: Session = Depends(get_db)) -> RoundO
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     db.refresh(round_)
     return _round_to_out(round_)
+
+
+@router.post("/{round_id}/remind")
+def remind_now(round_id: int, db: Session = Depends(get_db)) -> dict:
+    round_ = db.get(Round, round_id)
+    if round_ is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Runde nicht gefunden")
+    try:
+        return {"sent": send_reminders_now(db, round_)}
+    except RoundLifecycleError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
+@router.get("/{round_id}/response-rate.csv")
+def response_rate_csv(round_id: int, db: Session = Depends(get_db)) -> Response:
+    """Rücklauf je Fachbereich (nur Zahlen, keine Personen)."""
+    d = get_round_dashboard(round_id, db)
+    lines = ["fachbereich;eingeladen;abgegeben;quote"]
+    for fb, v in sorted(d.by_fachbereich.items()):
+        lines.append(f"{fb};{v['invited']};{v['completed']};{str(v['response_rate']).replace('.', ',')}")
+    return Response("\ufeff" + "\n".join(lines) + "\n", media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f"attachment; filename=ruecklauf-{round_id}.csv"})
 
 
 @router.get("/{round_id}/dashboard", response_model=RoundDashboardOut)

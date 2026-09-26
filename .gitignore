@@ -35,3 +35,4 @@ Thumbs.db
 /loadtest/tokens.csv
 test-results/
 playwright-report/
+backups/

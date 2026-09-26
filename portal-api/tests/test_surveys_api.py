@@ -117,7 +117,8 @@ def test_transfer_to_limesurvey_uses_client_and_stores_sid(client, seeded_users,
 
     import app.api.routes.surveys as surveys_module
 
-    monkeypatch.setattr(surveys_module, "LimeSurveyClient", FakeClient)
+    from app.services import survey_publish
+    monkeypatch.setattr(survey_publish, "LimeSurveyClient", FakeClient)
 
     response = client.post(f"/surveys/versions/{version_id}/transfer", headers=headers)
     assert response.status_code == 200
