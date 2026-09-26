@@ -1,0 +1,48 @@
+from datetime import date, datetime, timezone
+
+from app.models.round import Round, RoundStatus
+from app.models.survey import SurveyTemplate, SurveyVersion
+from app.services import round_automation as ra
+
+
+def _version(db):
+    t = SurveyTemplate(name="T")
+    db.add(t)
+    db.flush()
+    v = SurveyVersion(survey_template_id=t.id, version_number=1)
+    db.add(v)
+    db.commit()
+    return v
+
+
+def test_add_months_and_name():
+    assert ra.add_months(date(2026, 8, 31), 6) == date(2027, 2, 28)
+    assert ra.round_name("R {half}/{year}", date(2026, 9, 1)) == "R H2/2026"
+
+
+def test_automation_creates_and_advances(db_session):
+    v = _version(db_session)
+    ra.set_config(db_session, {"enabled": True, "survey_version_id": v.id, "next_start": "2026-10-01", "lead_days": 14})
+    # zu frueh: nichts
+    assert ra.run_automation(db_session, datetime(2026, 9, 1, tzinfo=timezone.utc)) is None
+    r = ra.run_automation(db_session, datetime(2026, 9, 20, tzinfo=timezone.utc))
+    assert r is not None and r.status == RoundStatus.geplant and r.name == "Feedback-Runde H2/2026"
+    assert (r.end_at - r.start_at).days == 28
+    assert ra.get_config(db_session)["next_start"] == "2027-04-01"
+    # idempotent: gleicher Zeitpunkt erzeugt keine zweite Runde
+    assert ra.run_automation(db_session, datetime(2026, 9, 21, tzinfo=timezone.utc)) is None
+    assert db_session.query(Round).count() == 1
+
+
+def test_disabled_does_nothing(db_session):
+    assert ra.run_automation(db_session) is None
+
+
+def test_automation_endpoints(client, seeded_users, db_session):
+    v = _version(db_session)
+    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
+    assert client.get("/rounds/automation", headers=h).json()["enabled"] is False
+    bad = client.put("/rounds/automation", json={"enabled": True}, headers=h)
+    assert bad.status_code == 422
+    ok = client.put("/rounds/automation", json={"enabled": True, "survey_version_id": v.id, "next_start": "2026-10-01"}, headers=h)
+    assert ok.status_code == 200 and ok.json()["next_start"] == "2026-10-01"

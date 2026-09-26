@@ -1,3 +1,5 @@
+from datetime import date
+from pydantic import BaseModel, Field
 from fastapi import Response
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -9,7 +11,7 @@ from app.models.person import Role
 from app.models.round import Participation, ParticipationStatus, Round, RoundStatus, RoundTarget
 from app.models.survey import SurveyVersion
 from app.schemas.round import RoundCreateIn, RoundDashboardOut, RoundOut, RoundTargetOut
-from app.services import pdf_letters
+from app.services import pdf_letters, round_automation
 from app.services.round_lifecycle import RoundLifecycleError, close_round, start_round
 
 router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_role(Role.admin))])
@@ -21,6 +23,44 @@ def _round_to_out(r: Round) -> RoundOut:
         start_at=r.start_at, end_at=r.end_at, reminder_days_before_end=r.reminder_days_before_end,
         report_channel=r.report_channel, target_fachbereiche=r.target_fachbereiche,
     )
+
+
+class AutomationIn(BaseModel):
+    enabled: bool = False
+    survey_version_id: int | None = None
+    interval_months: int = Field(6, ge=1, le=24)
+    next_start: date | None = None
+    duration_days: int = Field(28, ge=1, le=365)
+    lead_days: int = Field(14, ge=0, le=180)
+    name_pattern: str = "Feedback-Runde {half}/{year}"
+    reminder_days_before_end: list[int] = [7, 2]
+    report_channel: str = "portal"
+    target_fachbereiche: list[str] | None = None
+
+
+@router.get("/automation")
+def get_automation(db: Session = Depends(get_db)) -> dict:
+    return round_automation.get_config(db)
+
+
+@router.put("/automation")
+def put_automation(payload: AutomationIn, db: Session = Depends(get_db)) -> dict:
+    if payload.enabled and (payload.next_start is None or payload.survey_version_id is None):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Vorlage und nächster Starttermin sind erforderlich")
+    if payload.survey_version_id is not None and db.get(SurveyVersion, payload.survey_version_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Umfrageversion nicht gefunden")
+    try:
+        round_automation.round_name(payload.name_pattern, date.today())
+    except (KeyError, IndexError, ValueError) as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Ungültiges Namensmuster (erlaubt: {year} {half} {quarter} {month})") from exc
+    data = payload.model_dump(mode="json")
+    return round_automation.set_config(db, data)
+
+
+@router.post("/automation/run")
+def run_automation_now(db: Session = Depends(get_db)) -> dict:
+    created = round_automation.run_automation(db)
+    return {"created_round_id": created.id if created else None}
 
 
 @router.post("", response_model=RoundOut)

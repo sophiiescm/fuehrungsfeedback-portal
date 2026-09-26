@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
+	import RoundAutomation from '$lib/components/RoundAutomation.svelte';
 	import { roundsApi, downloadPdf, type Round, type Dashboard } from '$lib/api/rounds';
 	import { surveysApi, type SurveyTemplate } from '$lib/api/surveys';
 
@@ -61,6 +62,8 @@
 
 <h1 class="mb-6 text-2xl font-bold" style="color: var(--text-primary)">Befragungsrunden</h1>
 {#if error}<p class="mb-4 text-sm" style="color: var(--danger)">{error}</p>{/if}
+
+<RoundAutomation />
 
 <Card title="Neue Runde">
 	<div class="grid gap-2 md:grid-cols-2">

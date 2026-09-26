@@ -50,3 +50,6 @@
 - Verzweigung pro Frage (`show_if_*`): nur auf frühere Skala-/NPS-/Einfachauswahl-Fragen, wird als LimeSurvey-Relevance-Ausdruck exportiert; ungültige/rückwärtige Bedingung => immer sichtbar.
 - Auswertung: NPS aus Verteilung; Ampel gegenüber Unternehmensmittel (±0,2); frei wählbare Vergleichsgruppen (Fachbereiche), Unterdrückung < 3 FK bleibt.
 - Freitext: Wortwolke (Wort nur wenn ≥ 3 verschiedene Antworten), Kategorien per Keywords (Kategorie nur ab ≥ 3 Texten, sonst „Sonstiges"). PDF-Report enthält NPS, Auswahlfragen, Wortwolke, Themen.
+
+## Nr. 32 – Runden-Automatisierung
+Konfiguration in `setting` (`round_automation`), im Admin-UI (Befragungsrunden) änderbar: Vorlage, nächster Start, Intervall (Standard 6 Monate), Laufzeit, Vorlauf, Namensmuster, Erinnerungen, Versandkanal. Der 15-Minuten-Tick legt die Runde `lead_days` vor dem Start als „geplant" an (idempotent über den Namen) und schiebt `next_start` um das Intervall; Start/Schließen übernimmt der bestehende Lebenszyklus. Annahme: Vorlage bleibt dieselbe Version, bis Admin eine neue wählt.

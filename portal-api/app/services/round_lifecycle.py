@@ -244,7 +244,12 @@ def run_lifecycle_tick(db: Session) -> dict:
     offene Teilnahmen ab, verschickt faellige Erinnerungen, schliesst
     abgelaufene Runden."""
     now = datetime.now(timezone.utc)
-    result = {"started": 0, "reconciled": 0, "reminders_sent": 0, "closed": 0}
+    result = {"created": 0, "started": 0, "reconciled": 0, "reminders_sent": 0, "closed": 0}
+
+    from app.services.round_automation import run_automation
+
+    if run_automation(db, now) is not None:
+        result["created"] += 1
 
     due_to_start = db.execute(
         select(Round).where(Round.status == RoundStatus.geplant, Round.start_at <= now)
