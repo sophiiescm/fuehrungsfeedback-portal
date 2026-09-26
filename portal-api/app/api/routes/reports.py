@@ -10,31 +10,14 @@ from app.models.result import Report, ResultAggregate
 from app.models.round import Round, RoundStatus, RoundTarget
 from app.models.survey import Dimension, Question, QuestionType
 from app.models.system import Setting
-from app.services import evaluation, pdf_letters, textanalysis
+from app.services import evaluation, pdf_letters, report_layout, report_render, textanalysis
+from app.services import report_render_bench
 from app.services.stats import effective_threshold
 
 router = APIRouter(tags=["reports"])
 admin_router = APIRouter(dependencies=[Depends(require_permission("rounds.manage", view_perms=("results.view",)))], tags=["evaluation"])
 
 VISIBLE = (RoundStatus.ausgewertet, RoundStatus.berichtet)
-
-REPORT_HTML = """<html><head><meta charset="utf-8"><style>
-body{font-family:'DejaVu Sans',sans-serif;font-size:10pt}table{border-collapse:collapse;width:100%}
-td,th{border:1px solid #ccc;padding:4px;text-align:left}.bar{background:#4f46e5;height:10px}</style></head><body>
-<h1>Feedback-Report: {{ d.round_name }}</h1><p>{{ d.leader_name }} · {{ d.n_responses }} Antworten</p>
-<h2>Dimensionen</h2><table><tr><th>Dimension</th><th>Mittelwert</th><th>Median</th><th>Std.abw.</th><th>Min/Max</th><th>Fachbereich</th><th>Unternehmen</th><th>Vorrunde</th></tr>
-{% for x in d.dimensions %}<tr><td>{{ x.dimension }}</td><td>{{ x.mean }}<div class="bar" style="width:{{ x.mean * 20 }}%"></div></td><td>{{ x.median }}</td><td>{{ x.stddev }}</td><td>{{ x.min }}/{{ x.max }}</td>
-<td>{{ x.fachbereich.mean if x.fachbereich else '–' }}</td><td>{{ x.unternehmen.mean if x.unternehmen else '–' }}</td><td>{{ x.vorrunde.mean if x.vorrunde else '–' }}</td></tr>{% endfor %}</table>
-<h2>Fragen</h2><table>{% for q in d.questions %}<tr><td>{{ q.question }}</td>
-{% if q.type == 'choice' %}<td colspan="3">{% for k, v in q.distribution.items() %}{{ (q.options or [])[k|int - 1] if (q.options and k|int - 1 < q.options|length) else k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
-{% elif q.type == 'nps' %}<td>NPS {{ q.nps.score if q.nps else '–' }}</td><td>n={{ q.n }}</td><td>{{ q.distribution }}</td>
-{% else %}<td>{{ q.mean }}</td><td>n={{ q.n }}</td><td>{{ q.distribution }}</td>{% endif %}</tr>{% endfor %}</table>
-{% if d.nps and d.nps.score is not none %}<h2>Net Promoter Score</h2><p>NPS {{ d.nps.score }} ({{ d.nps.promoters }} Promoter, {{ d.nps.passives }} Passive, {{ d.nps.detractors }} Detractors)</p>{% endif %}
-{% if d.ai_summary %}<h2>Zusammenfassung der Freitexte</h2><p>{{ d.ai_summary }}</p>{% endif %}
-{% if d.wordcloud %}<h2>Häufige Begriffe</h2><p>{% for w in d.wordcloud %}<span style="font-size:{{ 9 + w.count * 2 if w.count < 8 else 25 }}pt">{{ w.word }}</span> {% endfor %}</p>{% endif %}
-{% if d.categories %}<h2>Freitexte nach Themen (geschwärzt)</h2>{% for c in d.categories %}<h3>{{ c.category }} ({{ c.count }})</h3><ul>{% for t in c.texts %}<li>{{ t }}</li>{% endfor %}</ul>{% endfor %}{% endif %}
-</body></html>"""
-
 
 def nps_from_distribution(dist: dict) -> dict:
     """NPS = Anteil Promoter (9-10) minus Anteil Detractors (0-6), in Prozentpunkten."""
@@ -207,19 +190,45 @@ def report_detail(target_id: int, user: CurrentUser = Depends(get_current_user),
     return _report_detail(db, _own_target(db, target_id, user))
 
 
-@router.get("/reports/{target_id}/pdf")
-def report_pdf(target_id: int, user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)) -> Response:
+EXPORT_TYPES = {
+    "pdf": "application/pdf",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "csv": "text/csv; charset=utf-8",
+}
+
+
+def render_export(detail: dict, layout: dict, fmt: str) -> bytes:
+    if fmt == "pdf":
+        try:
+            return pdf_letters.html_to_pdf(report_render.render_html(detail, layout))
+        except OSError as exc:
+            raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, f"PDF nicht verfügbar: {exc}") from exc
+    if fmt == "pptx":
+        return report_render.build_pptx(detail, layout)
+    if fmt == "xlsx":
+        return report_render.build_xlsx(detail, layout)
+    if fmt == "csv":
+        return report_render.build_csv(detail, layout).encode("utf-8")
+    raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unbekanntes Format (pdf, pptx, xlsx, csv)")
+
+
+def export_response(data: bytes, fmt: str, name: str) -> Response:
+    return Response(data, media_type=EXPORT_TYPES[fmt], headers={"Content-Disposition": f"attachment; filename={name}.{fmt}"})
+
+
+@router.get("/reports/{target_id}/export")
+def report_export(target_id: int, format: str = "pdf", user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)) -> Response:
+    """Eigener Report als PDF, PowerPoint, Excel oder CSV -- gestaltet nach dem Admin-Layout."""
     detail = _report_detail(db, _own_target(db, target_id, user))
     if not detail["available"]:
         raise HTTPException(status.HTTP_409_CONFLICT, detail["message"])
-    try:
-        pdf = pdf_letters.html_to_pdf(Template(REPORT_HTML).render(d=detail))
-    except OSError as exc:
-        raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, f"PDF nicht verfügbar: {exc}") from exc
-    return Response(
-        pdf, media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=report-{target_id}.pdf"},
-    )
+    return export_response(render_export(detail, report_layout.get_layout(db), format), format, f"report-{target_id}")
+
+
+@router.get("/reports/{target_id}/pdf")
+def report_pdf(target_id: int, user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)) -> Response:
+    return report_export(target_id, "pdf", user, db)
 
 
 @admin_router.post("/rounds/{round_id}/evaluate")
@@ -258,6 +267,27 @@ def benchmark_export(round_id: int, db: Session = Depends(get_db)) -> Response:
         lines.append(f"{fb};{len(ms)};" + ";".join(cells))
     return Response("\ufeff" + "\n".join(lines) + "\n", media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f"attachment; filename=benchmark-{round_id}.csv"})
+
+
+def _bench_round(db: Session, round_id: int) -> str:
+    r = db.get(Round, round_id)
+    if r is None:
+        raise HTTPException(404, "Runde nicht gefunden")
+    return r.name
+
+
+@admin_router.get("/benchmark/export.xlsx")
+def benchmark_xlsx(round_id: int, db: Session = Depends(get_db)) -> Response:
+    _bench_round(db, round_id)
+    dims, rows = report_render_bench.benchmark_table(benchmark(round_id, None, db))
+    return export_response(report_render_bench.benchmark_xlsx(dims, rows, report_layout.get_layout(db)["accent"]), "xlsx", f"benchmark-{round_id}")
+
+
+@admin_router.get("/benchmark/export.pptx")
+def benchmark_pptx(round_id: int, db: Session = Depends(get_db)) -> Response:
+    name = _bench_round(db, round_id)
+    dims, rows = report_render_bench.benchmark_table(benchmark(round_id, None, db))
+    return export_response(report_render_bench.benchmark_pptx(name, dims, rows, report_layout.get_layout(db)["accent"]), "pptx", f"benchmark-{round_id}")
 
 
 @admin_router.get("/benchmark")

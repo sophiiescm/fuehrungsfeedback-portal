@@ -66,6 +66,21 @@ export async function downloadPdf(path: string, filename: string) {
 	URL.revokeObjectURL(url);
 }
 
+export async function downloadFile(path: string, filename: string, method: 'GET' | 'POST' = 'GET', body?: unknown) {
+	const res = await fetch(`${API_BASE}${path}`, {
+		method,
+		headers: { Authorization: `Bearer ${auth.token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+		body: body ? JSON.stringify(body) : undefined
+	});
+	if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? 'Download fehlgeschlagen');
+	const url = URL.createObjectURL(await res.blob());
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
+}
+
 export const roundsApi = {
 	list: () => api.get<Round[]>('/rounds'),
 	create: (body: unknown) => api.post<Round>('/rounds', body),

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import access, actions, dev, auth, feedbacks, health, notifications, organisation, reports, rounds, surveys
+from app.api.routes import access, actions, report_layout, dev, auth, feedbacks, health, notifications, organisation, reports, rounds, surveys
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -74,6 +74,7 @@ app.include_router(rounds.router)
 app.include_router(reports.router)
 app.include_router(reports.admin_router)
 app.include_router(access.router)
+app.include_router(report_layout.router)
 app.include_router(dev.router)
 app.include_router(actions.router)
 app.include_router(feedbacks.router)

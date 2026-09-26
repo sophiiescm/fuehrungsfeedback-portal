@@ -54,3 +54,25 @@ test('Umfrage-Editor: Likert-Stufen einzeln beschriftbar, Auswahl mit mehreren F
 	await page.getByRole('button', { name: '+ Option hinzufügen' }).click();
 	await expect(page.getByPlaceholder('Option 4')).toBeVisible();
 });
+
+test('Report-Layout: Abschnitte umsortieren, Vorschau aktualisiert sich, Exporte verfügbar', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await loginAs(page, 'P00001', '/report-layout');
+	await expect(page.getByRole('heading', { name: 'Report-Layout' })).toBeVisible();
+	const frame = page.frameLocator('iframe[title="Vorschau des Reports"]');
+	await expect(frame.getByText('Beispiel-Runde')).toBeVisible();
+	await page.getByLabel('Überschrift').first().fill('Mein Gesamtbild');
+	await expect(frame.getByText('Mein Gesamtbild')).toBeVisible();
+	await page.getByRole('button', { name: 'Nach unten' }).first().click();
+	await expect(page.getByText('Ungespeicherte Änderungen')).toBeVisible();
+	for (const l of ['PDF', 'PowerPoint', 'Excel', 'CSV']) await expect(page.getByRole('button', { name: `⬇ ${l}` })).toBeVisible();
+	await page.screenshot({ path: 'e2e/screens/report-layout.png' });
+});
+
+test('Führungskraft: Export-Menü bietet PDF, PowerPoint, Excel und CSV', async ({ page }) => {
+	await loginAs(page, 'P00002', '/reports');
+	await page.getByRole('button', { name: /Exportieren/ }).click();
+	for (const l of ['PDF', 'PowerPoint', 'Excel', 'CSV']) await expect(page.getByRole('menuitem', { name: new RegExp(l) })).toBeVisible();
+	const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: /PowerPoint/ }).click()]);
+	expect(download.suggestedFilename()).toBe('feedback-report.pptx');
+});

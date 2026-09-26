@@ -15,7 +15,7 @@ from app.models.access import AccessRole, PersonAccessRole
 from app.models.person import Person, Role, RoleAssignment
 
 PERMISSIONS: dict[str, dict[str, str]] = {
-    "surveys.manage": {"label": "Umfragen anlegen und bearbeiten", "hint": "Umfrage gestalten, Fragebögen veröffentlichen"},
+    "surveys.manage": {"label": "Umfragen anlegen und bearbeiten", "hint": "Umfrage gestalten, Fragebögen veröffentlichen, Report-Layout und Exporte gestalten"},
     "rounds.manage": {"label": "Befragungsrunden verwalten", "hint": "Runden planen/starten/schließen, Erinnerungen, Code-Briefe, Reports verteilen"},
     "results.view": {"label": "Auswertungen ansehen", "hint": "Rücklauf, Benchmarks, Vergleiche, NPS und Exporte (ohne Rohantworten)"},
     "users.manage": {"label": "Benutzer & Organisation verwalten", "hint": "SAP-Import, Personen, Organigramm"},

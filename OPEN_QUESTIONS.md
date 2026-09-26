@@ -45,3 +45,10 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 3. **Team < 3 während laufender Runde:** Wenn SAP zwischenzeitlich ein Team unter 3 Personen bringt, gilt der Start-Snapshot. Soll die Runde für dieses Team abgebrochen werden? *Annahme:* nein (Snapshot).
 4. **Skalenbeschriftungen:** Standardtexte („Trifft gar nicht zu … Trifft voll zu“) sind Vorschläge – bitte fachlich prüfen/anpassen. Mehrsprachigkeit der Beschriftungen offen.
 5. **Zugriffsrollen im Betrieb:** Sollen Rollen künftig aus Entra-ID-Gruppen kommen statt im Portal gepflegt zu werden? *Annahme:* Pflege im Portal.
+
+## Neu: Report-Layout und Exporte
+1. **Firmen-Design:** Für PowerPoint/PDF gibt es Akzentfarbe, Titel und Fußzeile. Sollen Logo, Firmenschrift oder eine PowerPoint-Master-Vorlage der Firma verwendet werden? (Dafür bitte die .potx-Vorlage und das Logo bereitstellen.) *Annahme:* schlichtes Standarddesign.
+2. **Freitexte in Excel/CSV:** Standard: aus. Sollen Führungskräfte die geschwärzten Freitexte exportieren dürfen? Datenschutz/Betriebsrat klären, da Dateien das Portal verlassen.
+3. **Weitergabe:** Exportierte Reports sind nicht mit einem Wasserzeichen versehen. Soll „Vertraulich – nur für [Name]“ als Wasserzeichen/Fußzeile pro Person eingesetzt werden? (Platzhalter {leader} ist bereits in Titel/Untertitel möglich.)
+4. **Report-Layout je Runde oder Fachbereich:** Aktuell ein globales Layout. Sind unterschiedliche Layouts (z. B. für Produktion vs. Büro) gewünscht?
+5. **Sprache:** Reports sind deutsch; Mehrsprachigkeit offen.

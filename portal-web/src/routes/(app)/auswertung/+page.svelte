@@ -3,7 +3,7 @@
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import { api } from '$lib/api/client';
-	import { roundsApi, downloadPdf, type Round } from '$lib/api/rounds';
+	import { roundsApi, downloadFile, type Round } from '$lib/api/rounds';
 	import { organisationApi } from '$lib/api/organisation';
 
 	interface Nps { score: number | null; n: number; promoters: number; passives: number; detractors: number; leaders: number }
@@ -88,7 +88,11 @@
 		<select bind:value={roundId} onchange={load} class="glass-surface rounded px-3 py-2 text-sm" style="color: var(--text-primary)" aria-label="Runde">
 			{#each rounds as r (r.id)}<option value={r.id}>{r.name} ({r.status})</option>{/each}
 		</select>
-		{#if roundId}<Button variant="secondary" onclick={() => downloadPdf(`/benchmark/export.csv?round_id=${roundId}`, `benchmark-${roundId}.csv`)}>⬇ Als Excel/CSV</Button>{/if}
+		{#if roundId}
+			{#each [['xlsx', 'Excel'], ['pptx', 'PowerPoint'], ['csv', 'CSV']] as [f, l] (f)}
+				<Button variant="secondary" onclick={() => downloadFile(`/benchmark/export.${f}?round_id=${roundId}`, `benchmark-${roundId}.${f}`).catch((e) => (msg = e.message))}>⬇ {l}</Button>
+			{/each}
+		{/if}
 		{#if current?.status === 'geschlossen'}<Button onclick={() => act('evaluate')}>Auswerten</Button>{/if}
 		{#if current?.status === 'ausgewertet'}<Button onclick={() => act('distribute')}>Reports verteilen</Button>{/if}
 	</div>

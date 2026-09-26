@@ -35,6 +35,7 @@
 		{ href: '/rounds', perm: 'rounds.manage', label: 'Befragungsrunden', short: 'Runden', icon: ICONS.rounds, roles: ['admin'], primary: ['admin'] },
 		{ href: '/auswertung', perm: 'results.view', label: 'Auswertung & Benchmarking', short: 'Auswertung', icon: ICONS.chart, roles: ['admin'], primary: ['admin'] },
 		{ href: '/survey-builder', perm: 'surveys.manage', label: 'Umfrage gestalten', short: 'Umfrage', icon: ICONS.edit, roles: ['admin'] },
+		{ href: '/report-layout', perm: 'surveys.manage', label: 'Report-Layout', short: 'Report', icon: ICONS.edit, roles: ['admin'] },
 		{ href: '/organisation', perm: 'users.manage', label: 'Benutzer & Organisation', short: 'Benutzer', icon: ICONS.users, roles: ['admin'] },
 		{ href: '/benachrichtigungen', label: 'Benachrichtigungen', short: 'Mitteilungen', icon: ICONS.bell, roles: ['admin', 'fuehrungskraft', 'mitarbeiter'] },
 		{ href: '/einstellungen', perm: 'settings.manage', label: 'Einstellungen', short: 'Einstellungen', icon: ICONS.cog, roles: ['admin'] }

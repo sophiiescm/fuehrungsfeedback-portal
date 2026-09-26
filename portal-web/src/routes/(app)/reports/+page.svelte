@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Card from '$lib/components/Card.svelte';
 	import { api } from '$lib/api/client';
-	import { downloadPdf } from '$lib/api/rounds';
+	import { downloadFile } from '$lib/api/rounds';
 
 	interface Dim {
 		dimension: string;
@@ -43,6 +43,17 @@
 	let textTab = $state<'kategorien' | 'wordcloud' | 'alle'>('kategorien');
 	let openDim = $state<string | null>(null);
 	let loaded = $state(false);
+	let exportOpen = $state(false);
+	let exportError = $state('');
+	async function exportAs(fmt: string) {
+		exportOpen = false;
+		exportError = '';
+		try {
+			await downloadFile(`/reports/${selected}/export?format=${fmt}`, `feedback-report.${fmt}`);
+		} catch (e) {
+			exportError = e instanceof Error ? e.message : 'Export fehlgeschlagen';
+		}
+	}
 
 	onMount(async () => {
 		list = await api.get('/reports/mine');
@@ -104,10 +115,22 @@
 	{#if detail?.available}
 		<div class="flex flex-wrap gap-2">
 			<a href="/massnahmen" class="btn ghost">Maßnahmen ableiten</a>
-			<button class="btn" onclick={() => downloadPdf(`/reports/${selected}/pdf`, 'report.pdf')}>⬇ PDF</button>
+			<div class="relative">
+				<button class="btn" aria-haspopup="menu" aria-expanded={exportOpen} onclick={() => (exportOpen = !exportOpen)}>⬇ Exportieren ▾</button>
+				{#if exportOpen}
+					<button class="fixed inset-0 z-10 cursor-default" aria-label="Menü schließen" onclick={() => (exportOpen = false)}></button>
+					<div class="glass-surface absolute right-0 z-20 mt-2 flex w-56 flex-col p-2" style="background: var(--surface-glass-strong)" role="menu">
+						{#each [['pdf', '📄 PDF'], ['pptx', '📊 PowerPoint'], ['xlsx', '📈 Excel'], ['csv', '🧾 CSV']] as [f, l] (f)}
+							<button class="row" role="menuitem" onclick={() => exportAs(f)}>{l}</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
+
+{#if exportError}<p class="mb-3 text-sm" style="color: var(--danger)">{exportError}</p>{/if}
 
 {#if loaded && list.length === 0}
 	<Card>

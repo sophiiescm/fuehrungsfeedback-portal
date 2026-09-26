@@ -86,3 +86,8 @@ Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten 
 - Mindestteamgröße auch in „Meine Feedbacks“ erzwungen; Erklärtext dort entfernt.
 - Dev: Schnellzugriff auf alle Ansichten, „Ansicht wechseln“. Angemeldete Person rechts oben (Benutzermenü). Mitarbeiter-App-Simulator wieder entfernt.
 - Tests: 105 Backend, 12 Playwright. Neue Rückfragen: `OPEN_QUESTIONS.md` („Neu: Rechte, Skalen, Mindestteamgröße“).
+
+## Nachtrag 4: Report-Layout und Exporte
+- Admin-Oberfläche „Report-Layout“ mit Live-Vorschau und Beispiel-Downloads; Export der Reports als PDF, PowerPoint, Excel, CSV (Führungskraft: eigener Report; Auswertungs-Admin: Benchmark).
+- Tests: 111 Backend (inkl. 6 neue), 13 Playwright. PDF/PowerPoint/Excel/CSV im Docker-Container geprüft (HTTP 200, gültige Dateien); Öffnen in echtem PowerPoint/Excel nicht geprüft.
+- Neue Rückfragen: `OPEN_QUESTIONS.md` („Neu: Report-Layout und Exporte“).
