@@ -8,7 +8,7 @@
 	} = $props();
 </script>
 
-<div class="glass-surface p-6">
+<div class="glass-surface p-4 sm:p-6">
 	{#if title}
 		<h2 class="mb-4 text-lg font-semibold" style="color: var(--text-primary)">{title}</h2>
 	{/if}

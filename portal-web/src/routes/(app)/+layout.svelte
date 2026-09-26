@@ -51,7 +51,7 @@
 	</div>
 {:else}
 	<Sidebar />
-	<main class="min-h-screen p-4 pt-20 md:ml-[calc(var(--sidebar-width)+2rem)] md:p-8">
+	<main class="app-main mx-auto min-h-screen max-w-6xl p-4 lg:ml-[calc(var(--sidebar-width)+2rem)] lg:max-w-none lg:p-8">
 		{@render children()}
 	</main>
 {/if}

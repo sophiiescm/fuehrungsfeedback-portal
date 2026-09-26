@@ -26,7 +26,7 @@
 	{type}
 	{disabled}
 	{onclick}
-	class="rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {variantClass}"
+	class="min-h-11 rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {variantClass}"
 >
 	{@render children?.()}
 </button>

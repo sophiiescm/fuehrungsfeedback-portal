@@ -1,0 +1,10 @@
+{
+  "name": "Führungsfeedback",
+  "short_name": "Feedback",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#eef2ff",
+  "theme_color": "#4f46e5",
+  "lang": "de",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

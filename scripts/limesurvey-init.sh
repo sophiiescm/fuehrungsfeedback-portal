@@ -28,6 +28,17 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
   ON DUPLICATE KEY UPDATE stg_value='json';
 "
 
+echo "[limesurvey-init] Registriere Theme feedbackportal (mobil optimiert)..."
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
+  INSERT INTO lime_templates (name, folder, title, creation_date, author, author_email, author_url, copyright, license, version, api_version, view_folder, files_folder, description, last_update, owner_id, extends)
+    SELECT 'feedbackportal','feedbackportal','Feedback-Portal',NOW(),'Fuehrungsfeedback-Portal',author_email,author_url,'MIT','MIT','1.0.0',api_version,view_folder,files_folder,'Portal-Look, mobil optimiert',NULL,owner_id,'fruity_twentythree'
+    FROM lime_templates WHERE name='fruity_twentythree' AND NOT EXISTS (SELECT 1 FROM lime_templates WHERE name='feedbackportal');
+  INSERT INTO lime_template_configuration (template_name, files_css, files_js, files_print_css, options, cssframework_name, cssframework_css, cssframework_js, packages_to_load)
+    SELECT 'feedbackportal', '{\"add\":[\"css/portal.css\"]}', NULL, NULL, options, cssframework_name, cssframework_css, cssframework_js, packages_to_load
+    FROM lime_template_configuration WHERE template_name='fruity_twentythree' AND sid IS NULL AND gsid IS NULL
+    AND NOT EXISTS (SELECT 1 FROM lime_template_configuration WHERE template_name='feedbackportal') LIMIT 1;
+" || echo "[limesurvey-init] Theme-Registrierung uebersprungen (fruity_twentythree noch nicht vorhanden?)"
+
 echo "[limesurvey-init] Installiere/konfiguriere Plugin FeedbackBridge..."
 : "${HMAC_SECRET:=change_me_dev_hmac_secret}"
 : "${PORTAL_WEBHOOK_URL:=http://portal-api:8000/feedbacks/webhook/limesurvey-complete}"

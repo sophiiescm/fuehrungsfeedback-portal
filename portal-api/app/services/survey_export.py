@@ -34,6 +34,8 @@ MANDATORY_SURVEY_SETTINGS = {
     "tokenanswerspersistence": "Y",
     "alloweditaftercompletion": "N",
     "format": "G",  # Gruppe fuer Gruppe anzeigen
+    "showprogress": "Y",
+    "template": "feedbackportal",  # mobil optimiertes Portal-Theme (Fallback: LimeSurvey-Standard)
 }
 
 TSV_COLUMNS = [
@@ -134,7 +136,7 @@ def build_tsv(version: SurveyVersion, language: str = "de") -> str:
                         label = q.pole_label_min or str(point)
                     elif point == scale_max:
                         label = q.pole_label_max or str(point)
-                    rows.append(_row("A", **{"type/scale": "0"}, name=str(point), text=label, language=language))
+                    rows.append(_row("A", **{"type/scale": "0"}, name=str(point), text=label or str(point), language=language))  # Zwischenstufen mit Zahl beschriften
 
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=TSV_COLUMNS, delimiter="\t", extrasaction="ignore")

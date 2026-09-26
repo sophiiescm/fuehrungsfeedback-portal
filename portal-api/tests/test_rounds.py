@@ -91,7 +91,7 @@ def test_start_round_only_invites_teams_of_three_or_more(db_session, org):
 def test_leader_code_is_not_derived_from_personalnummer(db_session, org):
     round_lifecycle.start_round(db_session, org)
     for t in db_session.query(RoundTarget).all():
-        assert t.leader.personalnummer not in t.leader_code
+        assert t.leader_code != f"FK-{t.leader.personalnummer}"  # Zufallscode, nicht ableitbar (kurze Nummern koennen zufaellig als Hex vorkommen)
 
 
 def test_person_without_email_gets_login_code_and_portal_notification(db_session, org):

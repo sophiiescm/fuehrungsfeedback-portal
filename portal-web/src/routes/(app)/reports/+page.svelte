@@ -95,6 +95,7 @@
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
 	<h1 class="text-2xl font-bold" style="color: var(--text-primary)">Meine Reports / Trend</h1>
 	{#if detail?.available}
+		<a href="/massnahmen" class="rounded-[var(--radius-sm)] px-4 py-2 text-sm" style="background: var(--surface-glass-strong); color: var(--text-primary)">Maßnahmen ableiten</a>
 		<Button onclick={() => downloadPdf(`/reports/${selected}/pdf`, 'report.pdf')}>⬇ Report als PDF</Button>
 	{/if}
 </div>

@@ -1,27 +1,133 @@
 /* Portal-Look (siehe portal-web/src/lib/styles/tokens.css): Farbverlauf,
-   halbtransparente Karten, WCAG-AA-Kontrast (Text auf opakem Untergrund). */
+   halbtransparente Karten, WCAG-AA-Kontrast (Text auf opakem Untergrund).
+   Mobile-first: grosse Touch-Ziele (>= 48px), Antworten als Kacheln, Buttons in voller
+   Breite, iOS-Safe-Areas. Funktioniert auf Smartphone, iPad und Kiosk-PCs. */
+
+:root {
+  --pf-accent: #4f46e5;
+  --pf-accent-hover: #4338ca;
+  --pf-text: #1e2333;
+  --pf-text-2: #4b5266;
+  --pf-card: rgba(255, 255, 255, 0.92);
+  --pf-border: rgba(30, 35, 51, 0.14);
+  --pf-tile: #ffffff;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
 body {
   background: radial-gradient(circle at top left, #eef2ff, #e0f2fe 70%) fixed;
-  color: #1e2333;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--pf-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
-.question-container, .group-container, .outerframe, #main-col > form {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 22px;
+
+/* Karten */
+.outerframe, #main-col > form, .group-container, .group-outer-container { background: transparent !important; border: 0 !important; box-shadow: none !important; padding-left: 0; padding-right: 0; }
+.question-container, .survey-welcome, .survey-description {
+  background: var(--pf-card);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
   box-shadow: 0 8px 32px rgba(31, 41, 55, 0.12);
-  backdrop-filter: blur(16px);
 }
-.btn-primary, button.btn-primary, .ls-move-btn {
-  background: #4f46e5 !important;
-  border-color: #4f46e5 !important;
+.question-container { padding: 1rem 1.1rem; margin-bottom: 0.9rem; }
+.question-text, .ls-label-question { font-size: 1.05rem; font-weight: 600; color: var(--pf-text); }
+.question-help-container, .ls-question-help { color: var(--pf-text-2); font-size: 0.9rem; }
+.group-title, .group-name, .group-title h1, .group-title h2, h1.group-title { font-size: 1.35rem !important; font-weight: 700; margin: 0.5rem 0; }
+
+/* Fortschrittsbalken gut sichtbar */
+.progress { height: 12px; border-radius: 999px; background: rgba(30, 35, 51, 0.12); }
+.progress-bar { background: var(--pf-accent); border-radius: 999px; }
+
+/* Antwortoptionen als grosse Kacheln: li = Kachel, Radio/Checkbox links IN der Kachel */
+.answers-list .answer-item, ul.radio-list > li, ul.checkbox-list > li {
+  position: relative;
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+.answers-list .answer-item > input[type="radio"], .answers-list .answer-item > input[type="checkbox"] {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; margin: 0; accent-color: var(--pf-accent); z-index: 2; opacity: 1 !important; appearance: auto !important; -webkit-appearance: auto !important; visibility: visible !important; clip: auto !important; pointer-events: none;
+}
+.answers-list .answer-item > label {
+  display: flex; align-items: center;
+  width: 100%; min-height: 54px;
+  padding: 0.6rem 0.9rem 0.6rem 3.1rem;
+  margin: 0;
+  background: var(--pf-tile);
+  border: 2px solid var(--pf-border);
+  border-radius: 14px;
+  cursor: pointer;
+  color: var(--pf-text);
+  transition: border-color 0.12s, background 0.12s;
+}
+.answers-list .answer-item > label::before, .answers-list .answer-item > label::after { display: none !important; }
+.answers-list .answer-item > label:hover { border-color: var(--pf-accent); }
+.answers-list .answer-item > input:checked + label {
+  border-color: var(--pf-accent);
+  background: rgba(79, 70, 229, 0.12);
+  font-weight: 600;
+}
+.answers-list .answer-item > input:focus-visible + label { outline: 3px solid rgba(79, 70, 229, 0.45); }
+
+/* Skalen (Likert/NPS als Array): auf schmalen Bildschirmen umbrechen statt scrollen */
+.array-5-pt-choice .answers-list, .array-10-pt-choice .answers-list {
+  display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+}
+
+/* Textfelder */
+textarea, input[type="text"], input[type="number"], select {
+  font-size: 16px !important; /* verhindert Zoom auf iOS */
+  min-height: 48px;
+  border-radius: 12px !important;
+  border: 2px solid var(--pf-border) !important;
+  padding: 0.6rem 0.8rem;
+}
+textarea { min-height: 120px; }
+textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25) !important; outline: none; }
+
+/* Navigation: volle Breite, gross */
+.btn-primary, button.btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-previous-btn, .ls-move-submit-btn {
+  background: var(--pf-accent) !important;
+  border-color: var(--pf-accent) !important;
   color: #fff !important;
-  border-radius: 8px;
+  border-radius: 12px;
+  min-height: 52px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  font-size: 1rem;
 }
-.btn-primary:hover { background: #4338ca !important; }
-a { color: #4f46e5; }
+.btn-primary:hover { background: var(--pf-accent-hover) !important; }
+.ls-move-previous-btn { background: #fff !important; color: var(--pf-accent) !important; border: 2px solid var(--pf-accent) !important; }
+#navigator-container, .navigator { padding-bottom: 1rem; }
+a { color: var(--pf-accent); }
+
+/* Schmale Bildschirme (Handy) */
+@media (max-width: 767.98px) {
+  body { font-size: 16px; }
+  .container, .container-fluid { padding-left: 12px; padding-right: 12px; }
+  .question-container { padding: 0.9rem; border-radius: 16px; }
+  #navigator-container .row, .navigator .row { display: flex; flex-direction: column-reverse; gap: 0.6rem; }
+  #navigator-container button, .navigator button { width: 100%; }
+  /* Sticky Fortschritt oben */
+  .progress { position: sticky; top: 0; z-index: 5; }
+}
+
+/* Tablet/Desktop: angenehme Lesebreite */
+@media (min-width: 768px) {
+  #main-col, .survey-container, .outerframe { max-width: 820px; margin-left: auto; margin-right: auto; }
+}
+
 @media (prefers-color-scheme: dark) {
-  body { background: radial-gradient(circle at top left, #0f1222, #1a1f3a 70%) fixed; color: #f1f3fb; }
-  .question-container, .group-container, .outerframe, #main-col > form { background: rgba(30, 34, 54, 0.9); color: #f1f3fb; }
-  a { color: #818cf8; }
+  :root { --pf-text: #f1f3fb; --pf-text-2: #c7cbdc; --pf-card: rgba(30, 34, 54, 0.94); --pf-border: rgba(255,255,255,0.22); --pf-tile: #262b47; --pf-accent: #818cf8; --pf-accent-hover: #a5b4fc; }
+  body { background: radial-gradient(circle at top left, #0f1222, #1a1f3a 70%) fixed; color: var(--pf-text); }
+  .btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-submit-btn { color: #0f1222 !important; }
+  textarea, input[type="text"], select { background: #262b47 !important; color: var(--pf-text) !important; }
+  .ls-move-previous-btn { background: transparent !important; }
+  a { color: #a5b4fc; }
 }
