@@ -144,13 +144,13 @@ Regeln: siehe `CLAUDE.md` → „Arbeitsmodus“. Nach jeder Phase: Tests grün,
 **Akzeptanz (verifiziert):** 2 historische Seed-Runden (je 518 FK, ca. 5 % mit nur 2 Antworten → kein Report) laufen durch dieselbe Auswertungslogik; FK-Report mit Vergleich Fachbereich/Unternehmen/Vorrunde, Trend-Chart, PDF (Container), Benchmark pseudonymisiert (FK-A…), Gruppen < 3 unterdrückt; Rechtetest: nur die bewertete FK sieht den Report (auch Admins nicht). 70 Backend-Tests grün. Nicht live geprüft: `evaluate_round` gegen echte LimeSurvey-Antworten (Export-Format geprüft, Berechnung getestet), KI-Provider (nur `none` getestet), Report-Versand als PDF-Anhang (nur Portal-Benachrichtigung + Mail ohne Anhang). Aus den historischen Seed-Runden entstehen Reports. Eine FK mit 2 Antworten bekommt keinen Report, sondern einen Hinweis. Trend und Benchmark werden angezeigt. Die Statistik-Tests sind grün.
 
 ## Phase 6 – Härtung, Doku, Übergabe
-- [ ] Audit-Log für Admin-Aktionen, Rate-Limiting für den Code-Login, Security-Header, CSRF
-- [ ] LimeSurvey-Theme im Portal-Look
-- [ ] Playwright-Smoke-Tests (3 Rollen), Locust-Lasttest (300 gleichzeitig)
-- [ ] `docs/INSTALLATION.md`: Schritt für Schritt für Windows mit Docker Desktop, inkl. Seed und Test-Logins
-- [ ] `docs/BEDIENUNG.md`: kurze Anleitung je Rolle
-- [ ] `docs/DATENSCHUTZ-KONZEPT.md`: Entwurf der technischen und organisatorischen Maßnahmen, Anonymitätskonzept, Löschfristen – als Grundlage für Betriebsrat und Datenschutz
-- [ ] `docs/ENTSCHEIDUNGEN.md` und `OPEN_QUESTIONS.md` finalisieren
-- [ ] Abschlussbericht `docs/STATUS.md`: was fertig ist, was ein Stub ist, bekannte Grenzen, nächste Schritte
+- [x] Audit-Log für Admin-Aktionen, Rate-Limiting für den Code-Login, Security-Header, CSRF
+- [x] LimeSurvey-Theme im Portal-Look
+- [x] Playwright-Smoke-Tests (3 Rollen), Locust-Lasttest (300 gleichzeitig)
+- [x] `docs/INSTALLATION.md`: Schritt für Schritt für Windows mit Docker Desktop, inkl. Seed und Test-Logins
+- [x] `docs/BEDIENUNG.md`: kurze Anleitung je Rolle
+- [x] `docs/DATENSCHUTZ-KONZEPT.md`: Entwurf der technischen und organisatorischen Maßnahmen, Anonymitätskonzept, Löschfristen – als Grundlage für Betriebsrat und Datenschutz
+- [x] `docs/ENTSCHEIDUNGEN.md` und `OPEN_QUESTIONS.md` finalisieren
+- [x] Abschlussbericht `docs/STATUS.md`: was fertig ist, was ein Stub ist, bekannte Grenzen, nächste Schritte
 
-**Akzeptanz:** Eine neue Person kann das Projekt nach `INSTALLATION.md` starten und alle drei Rollen durchspielen.
+**Akzeptanz (verifiziert):** Installationsanleitung mit gelöschten Volumes komplett durchgespielt (Stack, Import, Seed, Runde, echte Teilnahme mit Webhook, Auswertung); Playwright 5/5, Locust 300 Nutzer 0 Fehler. Abweichungen/Lücken: `docs/STATUS.md`. Eine neue Person kann das Projekt nach `INSTALLATION.md` starten und alle drei Rollen durchspielen.

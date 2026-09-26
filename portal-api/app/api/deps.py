@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -40,9 +40,24 @@ def get_current_user(
 
 
 def require_role(*allowed_roles: Role):
-    def _dependency(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+    def _dependency(
+        request: Request,
+        current_user: CurrentUser = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> CurrentUser:
         if not any(current_user.has_role(r) for r in allowed_roles):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Keine Berechtigung fuer diese Aktion")
+        # Audit-Log fuer Admin-Aktionen (nur schreibende Requests, nie Inhalte/Antworten)
+        if Role.admin in allowed_roles and request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            from app.models.system import AuditLog
+
+            db.add(AuditLog(
+                actor_person_id=current_user.person.id,
+                action=f"{request.method} {request.url.path}",
+                target_type="http",
+                detail={"query": dict(request.query_params)},
+            ))
+            db.commit()
         return current_user
 
     return _dependency

@@ -1,0 +1,27 @@
+/* Portal-Look (siehe portal-web/src/lib/styles/tokens.css): Farbverlauf,
+   halbtransparente Karten, WCAG-AA-Kontrast (Text auf opakem Untergrund). */
+body {
+  background: radial-gradient(circle at top left, #eef2ff, #e0f2fe 70%) fixed;
+  color: #1e2333;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.question-container, .group-container, .outerframe, #main-col > form {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(31, 41, 55, 0.12);
+  backdrop-filter: blur(16px);
+}
+.btn-primary, button.btn-primary, .ls-move-btn {
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: #fff !important;
+  border-radius: 8px;
+}
+.btn-primary:hover { background: #4338ca !important; }
+a { color: #4f46e5; }
+@media (prefers-color-scheme: dark) {
+  body { background: radial-gradient(circle at top left, #0f1222, #1a1f3a 70%) fixed; color: #f1f3fb; }
+  .question-container, .group-container, .outerframe, #main-col > form { background: rgba(30, 34, 54, 0.9); color: #f1f3fb; }
+  a { color: #818cf8; }
+}

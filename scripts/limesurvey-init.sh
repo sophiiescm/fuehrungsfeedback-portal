@@ -28,4 +28,18 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
   ON DUPLICATE KEY UPDATE stg_value='json';
 "
 
+echo "[limesurvey-init] Installiere/konfiguriere Plugin FeedbackBridge..."
+: "${HMAC_SECRET:=change_me_dev_hmac_secret}"
+: "${PORTAL_WEBHOOK_URL:=http://portal-api:8000/feedbacks/webhook/limesurvey-complete}"
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
+  INSERT INTO lime_plugins (name, plugin_type, active, priority, version)
+    SELECT 'FeedbackBridge', 'upload', 1, 0, '1.0.0' FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM lime_plugins WHERE name='FeedbackBridge');
+  SET @pid = (SELECT id FROM lime_plugins WHERE name='FeedbackBridge');
+  DELETE FROM lime_plugin_settings WHERE plugin_id=@pid AND model IS NULL;
+  INSERT INTO lime_plugin_settings (plugin_id, model, model_id, \`key\`, value) VALUES
+    (@pid, NULL, NULL, 'hmac_secret', JSON_QUOTE('$HMAC_SECRET')),
+    (@pid, NULL, NULL, 'portal_webhook_url', JSON_QUOTE('$PORTAL_WEBHOOK_URL'));
+"
+
 echo "[limesurvey-init] Fertig."

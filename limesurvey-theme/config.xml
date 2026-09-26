@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <metadata>
+        <name>feedbackportal</name>
+        <title>Feedback-Portal</title>
+        <type>theme</type>
+        <creationDate>2026-09-26</creationDate>
+        <author>Fuehrungsfeedback-Portal</author>
+        <license>MIT</license>
+        <version>1.0.0</version>
+        <apiVersion>3.0</apiVersion>
+        <description><![CDATA[Erscheinungsbild im Look des Feedback-Portals (Glassmorphism). Erbt von fruity_twentythree, kein Kern-Eingriff.]]></description>
+        <extends>fruity_twentythree</extends>
+    </metadata>
+    <compatibility>
+        <version>6.0</version>
+    </compatibility>
+    <files>
+        <css>
+            <add>css/portal.css</add>
+        </css>
+    </files>
+</config>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.db import get_db
 from app.models.person import Person, RoleAssignment
 from app.services.login_codes import verify_login_code
+from app.services.rate_limit import login_limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -85,18 +86,22 @@ def me(current_user: CurrentUser = Depends(get_current_user)) -> MeOut:
 
 
 @router.post("/code-login", response_model=TokenOut)
-def code_login(payload: CodeLoginIn, db: Session = Depends(get_db)) -> TokenOut:
+def code_login(payload: CodeLoginIn, request: Request, db: Session = Depends(get_db)) -> TokenOut:
     """Anmeldung mit Personalnummer + Einmalcode fuer Personen ohne E-Mail
     (CLAUDE.md 'Produktionsmitarbeitende ohne E-Mail')."""
+    keys = [f"pnr:{payload.personalnummer}", f"ip:{request.client.host if request.client else '?'}"]
+    if any(login_limiter.blocked(k) for k in keys):
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Zu viele Fehlversuche. Bitte später erneut versuchen.")
     person = db.execute(
         select(Person).where(Person.personalnummer == payload.personalnummer)
     ).scalar_one_or_none()
-    if person is None or not person.aktiv:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Personalnummer oder Code ungültig")
-
-    match = verify_login_code(db, person, payload.code)
+    match = verify_login_code(db, person, payload.code) if person is not None and person.aktiv else None
     if match is None:
+        for k in keys:
+            login_limiter.fail(k)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Personalnummer oder Code ungültig")
+    for k in keys:
+        login_limiter.reset(k)
 
     roles = db.execute(select(RoleAssignment.role).where(RoleAssignment.person_id == person.id)).scalars().all()
     token = create_access_token(person.id, [r.value for r in roles])

@@ -130,8 +130,8 @@ class LimeSurveyClient:
         result = self.call("get_summary", sid)
         return result if isinstance(result, dict) else {}
 
-    def export_responses(self, sid: int, response_type: str = "long") -> bytes | None:
-        """Gibt die base64-dekodierten Rohdaten zurueck, oder None wenn es keine Antworten gibt."""
+    def export_responses(self, sid: int, response_type: str = "short") -> bytes | None:
+        """Antwortcodes ("short"), nicht Antworttexte. Gibt die base64-dekodierten Rohdaten zurueck, oder None wenn es keine Antworten gibt."""
         result = self.call("export_responses", sid, "json", None, "complete", "code", response_type)
         if isinstance(result, dict) and "status" in result:
             return None

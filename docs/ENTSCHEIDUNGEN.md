@@ -35,4 +35,10 @@
 | 23 | Reports sind ausschließlich für die bewertete Führungskraft sichtbar (Admins bekommen 404); Admins sehen nur pseudonymisierten Benchmark | CLAUDE.md Nr. 8, Rechtetest in `tests/test_evaluation.py`. Vergleichswerte (Fachbereich/Unternehmen) werden bei < 3 Führungskräften unterdrückt. |
 | 24 | Passlib durch direktes `bcrypt` ersetzt | passlib 1.7.4 ist mit bcrypt 5 inkompatibel (Absturz beim Hashen). |
 
+| 25 | LimeSurvey-Export für die Auswertung mit `responseType=short` (Antwortcodes), nicht `long` | Live festgestellt: `long` liefert Antworttexte (bei Skalenmitte leer), Statistik braucht die numerischen Codes. |
+| 26 | Das FeedbackBridge-Plugin wird von `limesurvey-init` per SQL in `lime_plugins`/`lime_plugin_settings` installiert und konfiguriert (Secret aus ENV) | Sonst wäre ein manueller Klickweg in der LimeSurvey-Oberfläche nötig; `docker compose up` soll alles bereitstellen. Verifiziert: Webhook setzt den Status. Der Plugin-Event `beforeSurveySettings` ist nur zum Hinzufügen von UI-Feldern gedacht – Erzwingung der Pflicht-Einstellungen läuft deshalb über `beforeSurveyActivate` (Quellcode geprüft). |
+| 27 | CSRF: kein Token-Mechanismus; Auth per Bearer-Header (kein Cookie) | Klassisches CSRF greift nur bei automatisch mitgesendeten Cookies. Der Webhook ist per HMAC geschützt. |
+| 28 | Rate-Limit für den Code-Login als In-Memory-Zähler (5 Fehlversuche/15 Min. je Personalnummer und je IP) | Reicht für den Prototyp; für mehrere API-Instanzen gemeinsamen Speicher nachrüsten (STATUS.md). |
+| 29 | Lasttest direkt gegen LimeSurvey (Umfrage-Teilnahme), nicht gegen das Portal | Die Teilnahme läuft technisch komplett in LimeSurvey; das Portal ist nur beim Start und in der Rücklauf-Anzeige beteiligt. |
+
 (Claude Code ergänzt weitere Entscheidungen fortlaufend.)

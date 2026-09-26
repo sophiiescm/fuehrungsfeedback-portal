@@ -36,15 +36,19 @@ def test_dev_login_unknown_person_returns_404(client, seeded_users):
     assert response.status_code == 404
 
 
+class _GetRequest:
+    method = "GET"
+
+
 def test_require_role_allows_matching_role(seeded_users):
     current = CurrentUser(person=seeded_users["admin"], roles=[Role.admin])
     dependency = require_role(Role.admin)
-    assert dependency(current_user=current) is current
+    assert dependency(request=_GetRequest(), current_user=current, db=None) is current
 
 
 def test_require_role_rejects_missing_role(seeded_users):
     current = CurrentUser(person=seeded_users["employee"], roles=[Role.mitarbeiter])
     dependency = require_role(Role.admin, Role.fuehrungskraft)
     with pytest.raises(HTTPException) as exc_info:
-        dependency(current_user=current)
+        dependency(request=_GetRequest(), current_user=current, db=None)
     assert exc_info.value.status_code == 403

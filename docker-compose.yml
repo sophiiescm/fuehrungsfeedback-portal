@@ -74,6 +74,7 @@ services:
       DB_NAME: ${MARIADB_DATABASE:-limesurvey}
       DB_USER: ${MARIADB_USER:-limesurvey}
       DB_PASSWORD: ${MARIADB_PASSWORD:-limesurvey_dev_password}
+      HMAC_SECRET: ${FEEDBACKBRIDGE_HMAC_SECRET:-change_me_dev_hmac_secret}
     volumes:
       - ./scripts/limesurvey-init.sh:/limesurvey-init.sh:ro
     entrypoint: ["sh", "/limesurvey-init.sh"]

@@ -209,3 +209,23 @@ def test_pdf_render_when_weasyprint_available(db_session, org):
     except (ImportError, OSError):
         pytest.skip("weasyprint-Systembibliotheken fehlen (lokal unter Windows), laeuft im Docker-Container")
     assert pdf.startswith(b"%PDF")
+
+
+def test_code_login_rate_limited_after_five_failures(client, seeded_users):
+    from app.services.rate_limit import login_limiter
+
+    login_limiter._fails.clear()
+    codes = [client.post("/auth/code-login", json={"personalnummer": "T-MA", "code": "BAD"}).status_code for _ in range(7)]
+    assert codes[:5] == [401] * 5 and codes[5:] == [429, 429]
+    login_limiter._fails.clear()
+
+
+def test_admin_mutations_are_audit_logged_and_headers_set(client, db_session, seeded_users):
+    from app.models.system import AuditLog
+
+    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
+    r = client.post("/surveys/templates", headers=h, json={"name": "Audit"})
+    assert db_session.query(AuditLog).filter(AuditLog.action == "POST /surveys/templates").count() == 1
+    assert r.headers["X-Content-Type-Options"] == "nosniff" and r.headers["X-Frame-Options"] == "DENY"
+    client.get("/surveys/templates", headers=h)
+    assert db_session.query(AuditLog).count() == 1  # Lesezugriffe werden nicht protokolliert

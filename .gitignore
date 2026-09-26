@@ -31,3 +31,7 @@ Thumbs.db
 # Generierte Reports/PDFs (nur fiktive Testdaten sollen versioniert sein, keine generierten Artefakte)
 /seed/output/
 *.pdf
+
+/loadtest/tokens.csv
+test-results/
+playwright-report/
