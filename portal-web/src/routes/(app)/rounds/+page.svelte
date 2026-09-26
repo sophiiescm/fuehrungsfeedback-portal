@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import Card from '$lib/components/Card.svelte';
 	import Button from '$lib/components/Button.svelte';
-	import RoundAutomation from '$lib/components/RoundAutomation.svelte';
+	import RoundAutomation, { type AutomationCfg } from '$lib/components/RoundAutomation.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 	import { api } from '$lib/api/client';
 	import { roundsApi, downloadPdf, type Round, type Dashboard } from '$lib/api/rounds';
 	import { surveysApi, type SurveyTemplate } from '$lib/api/surveys';
@@ -21,6 +22,20 @@
 	let error = $state('');
 	let info = $state('');
 	let busy = $state(false);
+
+	// --- Plus-Menue, Automatik-Fenster ---
+	let menuOpen = $state(false);
+	let autoOpen = $state(false);
+	let auto = $state<AutomationCfg | null>(null);
+	async function loadAuto() {
+		auto = await api.get<AutomationCfg>('/rounds/automation').catch(() => null);
+	}
+	const intervalLabel = (m: number) => ({ 1: 'jeden Monat', 3: 'vierteljährlich', 6: 'halbjährlich', 12: 'jährlich' } as Record<number, string>)[m] ?? `alle ${m} Monate`;
+	const inDays = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
+	// Laufende und geplante Runden zuerst (Automatik-Runden stehen damit oben), danach nach Start absteigend
+	const prio: Record<string, number> = { offen: 0, geplant: 1, entwurf: 1 };
+	const sortedRounds = $derived([...rounds].sort((a, b) => (prio[a.status] ?? 2) - (prio[b.status] ?? 2) || b.start_at.localeCompare(a.start_at)));
+	const autoNextExists = $derived(!!auto?.next_start && rounds.some((r) => r.start_at.slice(0, 10) === auto!.next_start));
 
 	// --- Assistent "Neue Runde" ---
 	let wizard = $state(false);
@@ -48,7 +63,10 @@
 		fachbereiche = await organisationApi.listFachbereiche();
 		if (!versionId) versionId = templates[0]?.versions.at(-1)?.id ?? null;
 	}
-	onMount(load);
+	onMount(() => {
+		load();
+		loadAuto();
+	});
 
 	function openWizard() {
 		wizard = true;
@@ -58,6 +76,24 @@
 		s.setHours(6, 0, 0, 0);
 		start = local(s);
 		setDuration(28);
+		name = suggestName(s);
+	}
+	function copyLast() {
+		const last = [...rounds].sort((a, b) => b.start_at.localeCompare(a.start_at))[0];
+		openWizard();
+		if (!last) return;
+		versionId = last.survey_version_id;
+		reminders = last.reminder_days_before_end.join(',');
+		channel = last.report_channel;
+		selectedFb = last.target_fachbereiche ?? [];
+		const s = new Date(last.start_at);
+		s.setMonth(s.getMonth() + 6);
+		if (s.getTime() < Date.now()) {
+			s.setTime(Date.now() + 86400000);
+			s.setHours(6, 0, 0, 0);
+		}
+		start = local(s);
+		setDuration(Math.max(1, Math.round((new Date(last.end_at).getTime() - new Date(last.start_at).getTime()) / 86400000)));
 		name = suggestName(s);
 	}
 	function suggestName(d: Date) {
@@ -137,15 +173,41 @@
 	const days = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000));
 </script>
 
-<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+<div class="mb-4">
 	<h1 class="text-2xl font-bold" style="color: var(--text-primary)">Befragungsrunden</h1>
-	{#if !wizard}<Button onclick={openWizard}>+ Neue Runde</Button>{/if}
 </div>
 {#if error}<p class="mb-4 text-sm" style="color: var(--danger)">{error}</p>{/if}
 {#if info}<p class="mb-4 text-sm" style="color: var(--success)">{info}</p>{/if}
 
-{#if wizard}
-	<Card>
+<!-- Automatik: immer oben sichtbar -->
+<div class="glass-surface mb-4 flex flex-wrap items-center gap-3 p-4" style="border-left: 4px solid {auto?.enabled ? 'var(--accent)' : 'var(--border-subtle)'}">
+	<span class="text-2xl" aria-hidden="true">🔁</span>
+	<div class="min-w-0 flex-1">
+		{#if auto?.enabled && auto.next_start}
+			<p class="font-semibold" style="color: var(--text-primary)">Automatische Runden: {intervalLabel(auto.interval_months)}</p>
+			<p class="text-sm" style="color: var(--text-secondary)">
+				Nächste Runde startet am {auto.next_start}{#if inDays(auto.next_start) >= 0} (in {inDays(auto.next_start)} Tagen){/if}
+				{#if !autoNextExists}· wird {auto.lead_days} Tage vorher angelegt{/if}
+			</p>
+		{:else}
+			<p class="font-semibold" style="color: var(--text-primary)">Automatische Runden sind aus</p>
+			<p class="text-sm" style="color: var(--text-secondary)">Richte einmal einen Rhythmus ein, z. B. halbjährlich – danach läuft alles von selbst.</p>
+		{/if}
+	</div>
+	<Button variant="secondary" onclick={() => (autoOpen = true)}>{auto?.enabled ? 'Bearbeiten' : 'Einrichten'}</Button>
+</div>
+
+{#if auto?.enabled && auto.next_start && !autoNextExists}
+	<div class="glass-surface mb-4 flex flex-wrap items-center gap-3 p-4" style="border: 1px dashed var(--accent)">
+		<div class="flex-1">
+			<p class="text-xs font-semibold tracking-wide uppercase" style="color: var(--accent)">🔁 Automatisch · geplant</p>
+			<p class="text-lg font-semibold" style="color: var(--text-primary)">Nächste Runde · Start {auto.next_start}</p>
+			<p class="text-sm" style="color: var(--text-secondary)">{auto.duration_days} Tage Laufzeit · Teams werden vor dem Start aus SAP aktualisiert</p>
+		</div>
+	</div>
+{/if}
+
+<Modal open={wizard} title="Neue Runde planen" wide onclose={() => (wizard = false)}>
 		<ol class="mb-5 flex gap-2 text-xs" aria-label="Schritte">
 			{#each STEPS as label, i}
 				<li class="flex-1 rounded-full px-2 py-1.5 text-center" style="background: {i + 1 === step ? 'var(--accent)' : i + 1 < step ? 'var(--success)' : 'var(--surface-glass-strong)'}; color: {i + 1 <= step ? '#fff' : 'var(--text-secondary)'}">{i + 1}. {label}</li>
@@ -211,11 +273,22 @@
 			<Button variant="secondary" onclick={() => (step === 1 ? (wizard = false) : (step -= 1))}>{step === 1 ? 'Abbrechen' : 'Zurück'}</Button>
 			{#if step < 4}<Button onclick={next} disabled={!canNext}>Weiter</Button>{:else}<Button onclick={create} disabled={busy || !name}>{startNow ? 'Runde starten' : 'Runde planen'}</Button>{/if}
 		</div>
-	</Card>
-{/if}
+</Modal>
+
+<Modal open={autoOpen} title="Automatische Runde" onclose={() => (autoOpen = false)}>
+	<RoundAutomation
+		onsaved={(c) => {
+			auto = c;
+			autoOpen = false;
+			info = c.enabled ? 'Automatik gespeichert.' : 'Automatik ausgeschaltet.';
+			load();
+		}}
+		oncancel={() => (autoOpen = false)}
+	/>
+</Modal>
 
 <div class="mt-5 flex flex-col gap-4">
-	{#each rounds as r (r.id)}
+	{#each sortedRounds as r (r.id)}
 		<Card>
 			<div class="flex flex-wrap items-start justify-between gap-2">
 				<div>
@@ -255,7 +328,79 @@
 	{/each}
 </div>
 
-<details class="mt-6">
-	<summary class="cursor-pointer py-2 text-sm font-semibold" style="color: var(--text-primary)">Automatische Runden (z. B. halbjährlich)</summary>
-	<RoundAutomation />
-</details>
+<!-- Plus-Button: immer erreichbar, oeffnet die Auswahl -->
+{#if menuOpen}
+	<button class="fixed inset-0 z-40 cursor-default" aria-label="Menü schließen" onclick={() => (menuOpen = false)}></button>
+	<div class="glass-surface fab-menu fixed z-50 flex w-72 flex-col gap-1 p-2" style="background: var(--surface-glass-strong)" role="menu">
+		<button class="opt" role="menuitem" onclick={() => { menuOpen = false; openWizard(); }}>
+			<span class="ico">📅</span><span><b>Neue Runde planen</b><br /><small>Schritt für Schritt: Fragebogen, Zeitraum, Empfänger</small></span>
+		</button>
+		<button class="opt" role="menuitem" onclick={() => { menuOpen = false; autoOpen = true; }}>
+			<span class="ico">🔁</span><span><b>Automatische Runde einrichten</b><br /><small>Wiederkehrend, z. B. halbjährlich</small></span>
+		</button>
+		{#if rounds.length}
+			<button class="opt" role="menuitem" onclick={() => { menuOpen = false; copyLast(); }}>
+				<span class="ico">📋</span><span><b>Letzte Runde kopieren</b><br /><small>Einstellungen übernehmen, Termine neu setzen</small></span>
+			</button>
+		{/if}
+	</div>
+{/if}
+<button class="fab fixed z-50" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Neue Runde oder Automatik hinzufügen" onclick={() => (menuOpen = !menuOpen)}>
+	<span class:rot={menuOpen}>+</span>
+</button>
+
+<style>
+	.fab {
+		right: 1.25rem;
+		bottom: calc(76px + env(safe-area-inset-bottom));
+		width: 60px;
+		height: 60px;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font-size: 2rem;
+		line-height: 1;
+		box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+	}
+	.fab span {
+		display: inline-block;
+		transition: transform 0.15s;
+	}
+	.fab span.rot {
+		transform: rotate(45deg);
+	}
+	.fab-menu {
+		right: 1.25rem;
+		bottom: calc(148px + env(safe-area-inset-bottom));
+	}
+	@media (min-width: 1024px) {
+		.fab {
+			bottom: 2rem;
+			right: 2rem;
+		}
+		.fab-menu {
+			bottom: 6.5rem;
+			right: 2rem;
+		}
+	}
+	.opt {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		min-height: 56px;
+		padding: 0.65rem 0.75rem;
+		border-radius: var(--radius-sm);
+		text-align: left;
+		color: var(--text-primary);
+		font-size: 0.9rem;
+	}
+	.opt:hover {
+		background: var(--surface-glass);
+	}
+	.opt small {
+		color: var(--text-secondary);
+	}
+	.ico {
+		font-size: 1.4rem;
+	}
+</style>

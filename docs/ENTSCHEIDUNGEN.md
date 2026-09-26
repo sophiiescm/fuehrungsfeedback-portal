@@ -100,3 +100,6 @@ Admins mit Recht `surveys.manage` gestalten den Report unter „Report-Layout“
 
 ## Nr. 46 – Teams automatisch aus SAP in jede Runde
 Vor jedem Rundenstart (manuell und automatisch) wird der Stand aus der konfigurierten SAP-Quelle (OData oder CSV-Pfad, Organisation → Import-Zeitplan) neu importiert, Rollen werden neu abgeleitet, dann entsteht der Snapshot. Schlägt der Abruf fehl, gilt der zuletzt importierte Stand (Log-Eintrag). Im Runden-Assistenten stehen „Stand der Organisationsdaten“ und „Jetzt aus SAP aktualisieren“; die Empfänger-Vorschau nutzt denselben Stand.
+
+## Nr. 47 – Runden-Seite: Plus-Button, Fenster, Automatik oben
+Ein schwebender „+“-Button (immer sichtbar, ohne Scrollen) öffnet die Auswahl: „Neue Runde planen“ (Assistent), „Automatische Runde einrichten“ und „Letzte Runde kopieren“; Assistent und Automatik-Formular öffnen als Fenster (Handy: von unten, Esc/✕/Klick daneben schließt). Oben auf der Seite steht immer ein Automatik-Banner (Rhythmus, nächster Start) und – solange die nächste automatische Runde noch nicht angelegt ist – eine gestrichelte „Automatisch · geplant“-Karte. Laufende und geplante Runden stehen vor abgeschlossenen.

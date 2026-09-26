@@ -81,7 +81,9 @@ test('Admin: Runden-Assistent führt in 4 Schritten durch die Planung', async ({
 	await page.setViewportSize({ width: 390, height: 844 });
 	await loginAs(page, USERS.admin.pnr);
 	await page.goto('/rounds');
-	await page.getByRole('button', { name: '+ Neue Runde' }).click();
+	await page.getByRole('button', { name: /Neue Runde oder Automatik/ }).click();
+	await page.getByRole('menuitem', { name: /Neue Runde planen/ }).click();
+	await expect(page.getByRole('dialog', { name: 'Neue Runde planen' })).toBeVisible();
 	await expect(page.getByText('Welchen Fragebogen')).toBeVisible();
 	await page.getByRole('button', { name: 'Weiter' }).click();
 	await expect(page.getByText('Wann soll die Runde laufen?')).toBeVisible();
@@ -96,4 +98,19 @@ test('Führungskraft: Maßnahmen-Seite erreichbar', async ({ page }) => {
 	await page.goto('/massnahmen');
 	await expect(page.getByRole('heading', { name: 'Maßnahmen', exact: true })).toBeVisible();
 	await expect(page.getByText('Meine Maßnahmen')).toBeVisible();
+});
+
+test('Runden: Plus-Button öffnet Auswahl, Automatik-Fenster, Automatik oben sichtbar', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await loginAs(page, USERS.admin.pnr);
+	await page.goto('/rounds');
+	await expect(page.getByText(/Automatische Runden/).first()).toBeVisible();
+	await page.getByRole('button', { name: /Neue Runde oder Automatik/ }).click();
+	await expect(page.getByRole('menuitem')).toHaveCount(3);
+	await page.getByRole('menuitem', { name: /Automatische Runde einrichten/ }).click();
+	const dlg = page.getByRole('dialog', { name: 'Automatische Runde' });
+	await expect(dlg).toBeVisible();
+	await page.screenshot({ path: 'e2e/screens/runden-automatik-fenster.png' });
+	await page.keyboard.press('Escape');
+	await expect(dlg).toHaveCount(0);
 });
