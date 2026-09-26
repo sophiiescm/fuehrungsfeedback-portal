@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { auth, type Role } from '$lib/stores/auth.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import DevSwitcher from './DevSwitcher.svelte';
 
 	interface MenuItem {
 		href: string;
@@ -9,6 +10,7 @@
 		short: string;
 		icon: string; // SVG-Pfad (24x24, Stroke)
 		roles: Role[];
+		perm?: string; // Admin-Recht, das fuer den Punkt noetig ist
 		primary?: Role[]; // in der mobilen Tab-Leiste fuer diese Rollen
 	}
 
@@ -30,15 +32,15 @@
 		{ href: '/feedbacks', label: 'Meine Feedbacks', short: 'Feedbacks', icon: ICONS.chat, roles: ['admin', 'fuehrungskraft', 'mitarbeiter'], primary: ['fuehrungskraft', 'mitarbeiter'] },
 		{ href: '/reports', label: 'Meine Reports / Trend', short: 'Reports', icon: ICONS.chart, roles: ['fuehrungskraft'], primary: ['fuehrungskraft'] },
 		{ href: '/massnahmen', label: 'Maßnahmen', short: 'Maßnahmen', icon: ICONS.rounds, roles: ['admin', 'fuehrungskraft', 'mitarbeiter'], primary: ['mitarbeiter'] },
-		{ href: '/rounds', label: 'Befragungsrunden', short: 'Runden', icon: ICONS.rounds, roles: ['admin'], primary: ['admin'] },
-		{ href: '/auswertung', label: 'Auswertung & Benchmarking', short: 'Auswertung', icon: ICONS.chart, roles: ['admin'], primary: ['admin'] },
-		{ href: '/survey-builder', label: 'Umfrage gestalten', short: 'Umfrage', icon: ICONS.edit, roles: ['admin'] },
-		{ href: '/organisation', label: 'Benutzer & Organisation', short: 'Benutzer', icon: ICONS.users, roles: ['admin'] },
+		{ href: '/rounds', perm: 'rounds.manage', label: 'Befragungsrunden', short: 'Runden', icon: ICONS.rounds, roles: ['admin'], primary: ['admin'] },
+		{ href: '/auswertung', perm: 'results.view', label: 'Auswertung & Benchmarking', short: 'Auswertung', icon: ICONS.chart, roles: ['admin'], primary: ['admin'] },
+		{ href: '/survey-builder', perm: 'surveys.manage', label: 'Umfrage gestalten', short: 'Umfrage', icon: ICONS.edit, roles: ['admin'] },
+		{ href: '/organisation', perm: 'users.manage', label: 'Benutzer & Organisation', short: 'Benutzer', icon: ICONS.users, roles: ['admin'] },
 		{ href: '/benachrichtigungen', label: 'Benachrichtigungen', short: 'Mitteilungen', icon: ICONS.bell, roles: ['admin', 'fuehrungskraft', 'mitarbeiter'] },
-		{ href: '/einstellungen', label: 'Einstellungen', short: 'Einstellungen', icon: ICONS.cog, roles: ['admin'] }
+		{ href: '/einstellungen', perm: 'settings.manage', label: 'Einstellungen', short: 'Einstellungen', icon: ICONS.cog, roles: ['admin'] }
 	];
 
-	const visibleItems = $derived(menuItems.filter((item) => item.roles.some((r) => auth.hasRole(r))));
+	const visibleItems = $derived(menuItems.filter((item) => item.roles.some((r) => auth.hasRole(r)) && (!item.perm || auth.can(item.perm))));
 	// Tab-Leiste: Prioritaet Admin > Fuehrungskraft > Mitarbeiter, maximal 4 + "Mehr"
 	const roleOrder: Role[] = ['admin', 'fuehrungskraft', 'mitarbeiter'];
 	const mainRole = $derived(roleOrder.find((r) => auth.hasRole(r)) ?? 'mitarbeiter');
@@ -85,6 +87,7 @@
 				{@render icon(item.icon)}<span>{item.label}</span>
 			</a>
 		{/each}
+		<div class="mt-2 border-t pt-3" style="border-color: var(--border-subtle)"><DevSwitcher /></div>
 		<div class="mt-2 flex items-center justify-between border-t pt-3" style="border-color: var(--border-subtle)">
 			<ThemeToggle />
 			<button onclick={() => auth.logout()} class="px-3 py-2 text-sm" style="color: var(--text-secondary)">Abmelden</button>
@@ -106,6 +109,7 @@
 
 	<div class="flex flex-col gap-3 border-t px-2 pt-4" style="border-color: var(--border-subtle)">
 		<div class="text-sm" style="color: var(--text-secondary)">{auth.user?.full_name ?? ''}</div>
+		<DevSwitcher />
 		<ThemeToggle />
 		<button onclick={() => auth.logout()} class="text-left text-sm" style="color: var(--text-muted)">Abmelden</button>
 	</div>

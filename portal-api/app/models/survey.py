@@ -76,6 +76,7 @@ class Question(Base):
     scale_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     pole_label_min: Mapped[str | None] = mapped_column(String(200), nullable=True)
     pole_label_max: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    scale_labels: Mapped[list | None] = mapped_column(JSON, nullable=True)  # Beschriftung jeder Skalenstufe (Likert)
     mandatory: Mapped[bool] = mapped_column(default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     # Code der Frage in LimeSurvey (z.B. "G01Q03"), gesetzt nach Uebertragung

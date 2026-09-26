@@ -12,6 +12,8 @@
 		roles: string[];
 	}
 
+	interface Persona { title: string; personalnummer: string; full_name: string; note: string }
+	let personas = $state<Persona[]>([]);
 	let devUsers = $state<DevUser[]>([]);
 	let devLoginAvailable = $state(false);
 	let personalnummer = $state('');
@@ -20,6 +22,7 @@
 
 	onMount(async () => {
 		try {
+			personas = await api.get<Persona[]>('/dev/personas');
 			devUsers = await api.get<DevUser[]>('/auth/dev-login/users');
 			devLoginAvailable = true;
 		} catch {
@@ -103,21 +106,26 @@
 
 				{#if devLoginAvailable}
 					<div class="mt-4 border-t pt-4" style="border-color: var(--border-subtle)">
-						<p class="mb-2 text-xs" style="color: var(--text-muted)">
-							Dev-Login (nur lokale Entwicklung)
-						</p>
+						<p class="mb-2 text-xs font-semibold" style="color: var(--text-muted)">🛠 Entwickler-Schnellzugriff (nur lokale Entwicklung)</p>
 						<div class="flex flex-col gap-2">
-							{#each devUsers as user (user.personalnummer)}
-								<button
-									onclick={() => loginAsDevUser(user.personalnummer)}
-									class="glass-surface flex items-center justify-between rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm"
-									style="color: var(--text-primary)"
-								>
-									<span>{user.full_name}</span>
-									<span class="text-xs" style="color: var(--text-muted)">{user.roles.join(', ')}</span>
+							{#each personas as p (p.personalnummer)}
+								<button onclick={() => loginAsDevUser(p.personalnummer)} class="glass-surface flex flex-col rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm" style="color: var(--text-primary); min-height: 52px">
+									<span class="font-semibold">{p.title}</span>
+									<span class="text-xs" style="color: var(--text-secondary)">{p.full_name} · {p.note}</span>
 								</button>
 							{/each}
+							<a href="/dev/mitarbeiter-app" class="glass-surface rounded-[var(--radius-sm)] px-3 py-3 text-center text-sm" style="color: var(--accent)">📱 Mitarbeiter-App simulieren (Trusted-App-SSO)</a>
 						</div>
+						<details class="mt-3 text-xs" style="color: var(--text-muted)">
+							<summary class="cursor-pointer py-1">Weitere Personen</summary>
+							<div class="mt-2 flex flex-col gap-1">
+								{#each devUsers as user (user.personalnummer)}
+									<button onclick={() => loginAsDevUser(user.personalnummer)} class="flex items-center justify-between rounded px-2 py-2 text-left" style="color: var(--text-primary)">
+										<span>{user.full_name}</span><span>{user.roles.join(', ')}</span>
+									</button>
+								{/each}
+							</div>
+						</details>
 					</div>
 				{/if}
 			</div>

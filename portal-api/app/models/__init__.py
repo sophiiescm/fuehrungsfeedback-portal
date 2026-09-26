@@ -1,3 +1,4 @@
+from app.models.access import AccessRole, PersonAccessRole
 from app.models.action import Action
 from app.models.login_code import LoginCode
 from app.models.notification import MailTemplate, Notification
@@ -9,6 +10,8 @@ from app.models.sso import UsedAssertion
 from app.models.system import AuditLog, ImportLog, Setting
 
 __all__ = [
+    "AccessRole",
+    "PersonAccessRole",
     "Action",
     "UsedAssertion",
     "OrgUnit",

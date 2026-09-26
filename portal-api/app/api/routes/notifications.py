@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import CurrentUser, get_current_user, require_role
+from app.api.deps import CurrentUser, get_current_user, require_permission
 from app.db import get_db
 from app.models.notification import MailTemplate, Notification
 from app.models.person import Role
@@ -41,7 +41,7 @@ def mark_notification_read(
 
 
 mail_template_router = APIRouter(
-    prefix="/mail-templates", tags=["mail-templates"], dependencies=[Depends(require_role(Role.admin))]
+    prefix="/mail-templates", tags=["mail-templates"], dependencies=[Depends(require_permission("settings.manage"))]
 )
 
 

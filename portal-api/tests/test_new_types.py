@@ -120,3 +120,21 @@ def test_compare_endpoint_traffic_light_and_suppression(client, db_session, vers
     assert d["groups"]["IT"]["suppressed"] is True  # nur 1 Fuehrungskraft
     assert client.put("/nps/reference", headers=h, json={"value": 31, "label": "Branche"}).json()["value"] == 31.0
     assert client.get("/nps/reference", headers=h).json()["label"] == "Branche"
+
+
+def test_scale_labels_validated_and_exported(client, seeded_users, db_session):
+    from app.services.survey_export import build_tsv
+    from app.models.survey import SurveyVersion
+    h = {"Authorization": "Bearer " + client.post("/auth/dev-login", json={"personalnummer": "T-ADMIN"}).json()["access_token"]}
+    tid = client.post("/surveys/templates", json={"name": "L"}, headers=h).json()["id"]
+    vid = client.get("/surveys/templates", headers=h).json()[0]["versions"][0]["id"]
+    labels = ["nie", "selten", "manchmal", "oft", "immer"]
+    ok = client.post(f"/surveys/versions/{vid}/questions", headers=h,
+                     json={"type": "likert", "text": "Q?", "scale_min": 1, "scale_max": 5, "scale_labels": labels})
+    assert ok.status_code == 200 and ok.json()["scale_labels"] == labels
+    bad = client.post(f"/surveys/versions/{vid}/questions", headers=h,
+                      json={"type": "likert", "text": "Q2?", "scale_min": 1, "scale_max": 7, "scale_labels": labels})
+    assert bad.status_code == 400
+    tsv = build_tsv(db_session.get(SurveyVersion, vid))
+    for i, l in enumerate(labels, start=1):
+        assert any(line.startswith(f"A\t0\t{i}\t{l}\t") for line in tsv.splitlines())

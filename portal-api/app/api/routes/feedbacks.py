@@ -29,6 +29,9 @@ def my_feedbacks(
     for p in participations:
         round_ = db.get(Round, p.round_id)
         target = db.get(RoundTarget, p.round_target_id)
+        # Nur Teams mit >= Mindestgroesse duerfen ueberhaupt Feedback geben (Anonymitaet, CLAUDE.md Nr. 1)
+        if not target.evaluable or target.team_size_snapshot < settings.min_team_size_for_invitation:
+            continue
         link = None
         if p.status == ParticipationStatus.offen and p.limesurvey_token and target.limesurvey_sid:
             link = (

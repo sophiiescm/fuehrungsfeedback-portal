@@ -18,6 +18,7 @@ export interface Question {
 	scale_max: number | null;
 	pole_label_min: string | null;
 	pole_label_max: string | null;
+	scale_labels: string[] | null;
 	mandatory: boolean;
 	sort_order: number;
 	help_text: string | null;
@@ -60,6 +61,7 @@ export interface QuestionInput {
 	scale_max?: number;
 	pole_label_min?: string;
 	pole_label_max?: string;
+	scale_labels?: string[];
 	mandatory?: boolean;
 	help_text?: string | null;
 	options?: string[] | null;

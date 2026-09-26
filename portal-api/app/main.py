@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import actions, auth, feedbacks, health, notifications, organisation, reports, rounds, surveys
+from app.api.routes import access, actions, dev, auth, feedbacks, health, notifications, organisation, reports, rounds, surveys
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -20,6 +20,13 @@ async def lifespan(app: FastAPI):
         from app.bootstrap_dev_data import ensure_dev_fixture_users
 
         ensure_dev_fixture_users()
+
+    if not is_test:
+        from app.db import SessionLocal
+        from app.services.permissions import ensure_default_roles
+
+        with SessionLocal() as _db:
+            ensure_default_roles(_db)
 
     if not is_test:
         from app.bootstrap_mail_templates import ensure_default_mail_templates
@@ -66,6 +73,8 @@ app.include_router(surveys.router)
 app.include_router(rounds.router)
 app.include_router(reports.router)
 app.include_router(reports.admin_router)
+app.include_router(access.router)
+app.include_router(dev.router)
 app.include_router(actions.router)
 app.include_router(feedbacks.router)
 app.include_router(notifications.router)

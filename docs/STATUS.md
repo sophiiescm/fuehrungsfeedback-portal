@@ -79,3 +79,10 @@ Fertig und getestet (97 Backend-Tests, 8 Playwright-Tests inkl. iPhone-/iPad-Vie
 - **Admin:** Runden-Assistent (4 Schritte), Veröffentlichen automatisch beim Start, „Erinnerung an alle Offenen“, Rücklauf-Balken, CSV-Exporte, Admin-Rolle im Portal vergeben.
 - **Betrieb:** `docker-compose.prod.yml` (HTTPS/Caddy), `scripts/backup.sh`, automatische Löschfristen – siehe `docs/BETRIEB.md`.
 Nicht getestet: echte iPhones/iPads/Kiosk-Geräte, Produktions-HTTPS mit echten Domains, Lasttest nach Theme-Änderung (Format „Gruppe für Gruppe“ unverändert). Offene Rückfragen: `OPEN_QUESTIONS.md` (Abschnitt „Neu: Mobile Bedienung …“).
+
+## Nachtrag 3: Rechte, Skalen, Dev-Ansichten
+- Nutzer & Rechte (Einstellungen): eigene Zugriffsrollen mit fünf Rechten, Admins mit unterschiedlichen Befugnissen (z. B. „Nur Auswertung“), serverseitig erzwungen, 8 neue Tests.
+- Umfrage-Editor: jede Likert-Stufe einzeln beschriftbar (4–7 Stufen), Auswahlfragen mit einzelnen Optionsfeldern, Mehrfachantworten als Checkboxen.
+- Mindestteamgröße auch in „Meine Feedbacks“ erzwungen; Erklärtext dort entfernt.
+- Dev: Schnellzugriff auf alle Ansichten, „Ansicht wechseln“, Mitarbeiter-App-Simulator (Trusted-App-SSO).
+- Tests: 105 Backend, 12 Playwright. Neue Rückfragen: `OPEN_QUESTIONS.md` („Neu: Rechte, Skalen, Mindestteamgröße“).

@@ -39,15 +39,26 @@
 
 	// Formular "Frage hinzufuegen" (pro Sektion: Dimension-ID oder null)
 	let addFormOpenFor = $state<number | null | undefined>(undefined);
+	const PRESETS: Record<number, string[]> = {
+		4: ['Trifft gar nicht zu', 'Trifft eher nicht zu', 'Trifft eher zu', 'Trifft voll zu'],
+		5: ['Trifft gar nicht zu', 'Trifft eher nicht zu', 'Teils/teils', 'Trifft eher zu', 'Trifft voll zu'],
+		6: ['Trifft gar nicht zu', 'Trifft nicht zu', 'Trifft eher nicht zu', 'Trifft eher zu', 'Trifft zu', 'Trifft voll zu'],
+		7: ['Trifft gar nicht zu', 'Trifft nicht zu', 'Trifft eher nicht zu', 'Teils/teils', 'Trifft eher zu', 'Trifft zu', 'Trifft voll zu']
+	};
+	function setScale(n: number) {
+		form.scaleMax = n;
+		form.labels = [...PRESETS[n]];
+	}
 	let form = $state({
 		type: 'likert' as QuestionType,
 		text: '',
 		help: '',
 		scaleMax: 5,
-		poleMin: 'Trifft gar nicht zu',
-		poleMax: 'Trifft voll zu',
+		labels: [...PRESETS[5]],
+		poleMin: 'Sehr unwahrscheinlich',
+		poleMax: 'Sehr wahrscheinlich',
 		mandatory: true,
-		optionsText: '',
+		options: ['', '', ''],
 		allowMultiple: false,
 		branching: false,
 		showIfQuestion: null as number | null,
@@ -104,10 +115,11 @@
 			text: '',
 			help: '',
 			scaleMax: 5,
-			poleMin: 'Trifft gar nicht zu',
-			poleMax: 'Trifft voll zu',
+			labels: [...PRESETS[5]],
+			poleMin: 'Sehr unwahrscheinlich',
+			poleMax: 'Sehr wahrscheinlich',
 			mandatory: true,
-			optionsText: '',
+			options: ['', '', ''],
 			allowMultiple: false,
 			branching: false,
 			showIfQuestion: null,
@@ -119,10 +131,8 @@
 	async function submitAddForm() {
 		if (!detail || !form.text.trim() || addFormOpenFor === undefined) return;
 		error = '';
-		const options =
-			form.type === 'choice'
-				? form.optionsText.split('\n').map((o) => o.trim()).filter(Boolean)
-				: null;
+		const options = form.type === 'choice' ? form.options.map((o) => o.trim()).filter(Boolean) : null;
+		const isLikert = form.type === 'likert';
 		try {
 			await surveysApi.addQuestion(detail.id, {
 				type: form.type,
@@ -130,8 +140,9 @@
 				dimension_id: addFormOpenFor,
 				scale_min: 1,
 				scale_max: form.scaleMax,
-				pole_label_min: form.poleMin,
-				pole_label_max: form.poleMax,
+				pole_label_min: isLikert ? form.labels[0] : form.poleMin,
+				pole_label_max: isLikert ? form.labels[form.labels.length - 1] : form.poleMax,
+				scale_labels: isLikert ? form.labels.map((l) => l.trim()) : undefined,
 				mandatory: form.mandatory,
 				help_text: form.help.trim() || null,
 				options,
@@ -228,10 +239,10 @@
 			{#if showPreview}
 				{#if q.type === 'likert' || q.type === 'nps'}
 					<div class="mt-2 flex flex-wrap gap-3">
-						{#each scalePoints(q) as point}
-							<label class="flex flex-col items-center text-xs" style="color: var(--text-muted)">
+						{#each scalePoints(q) as point, i}
+							<label class="flex max-w-[6.5rem] flex-col items-center text-center text-xs" style="color: var(--text-muted)">
 								<input type="radio" disabled />
-								{point === scalePoints(q)[0] ? (q.pole_label_min ?? point) : point === scalePoints(q).at(-1) ? (q.pole_label_max ?? point) : point}
+								{q.scale_labels?.[i] ?? (point === scalePoints(q)[0] ? (q.pole_label_min ?? point) : point === scalePoints(q).at(-1) ? (q.pole_label_max ?? point) : point)}
 							</label>
 						{/each}
 					</div>
@@ -253,7 +264,7 @@
 			{:else}
 				<p class="mt-1 text-xs" style="color: var(--text-muted)">
 					<span class="rounded-full px-2 py-0.5" style="background: var(--surface-glass-strong)">{TYPE_LABELS[q.type]}</span>
-					{#if q.type === 'likert'}Skala {q.scale_min}–{q.scale_max}: „{q.pole_label_min}“ … „{q.pole_label_max}“{/if}
+					{#if q.type === 'likert'}{q.scale_labels ? q.scale_labels.map((l, i) => `${i + 1} = ${l}`).join(' · ') : `Skala ${q.scale_min}–${q.scale_max}: „${q.pole_label_min}“ … „${q.pole_label_max}“`}{/if}
 					{#if q.type === 'choice'}{q.allow_multiple ? 'Mehrfachauswahl' : 'Einfachauswahl'}: {(q.options ?? []).join(' · ')}{/if}
 				</p>
 				{#if q.show_if_question_id}
@@ -290,21 +301,38 @@
 		<input placeholder="Hilfetext / Beschreibung (optional)" bind:value={form.help} class="glass-surface rounded-[var(--radius-sm)] px-3 py-2 text-xs" style="color: var(--text-primary)" />
 
 		{#if form.type === 'likert'}
-			<label class="text-xs" style="color: var(--text-secondary)">
-				Skala von 1 bis
-				<select bind:value={form.scaleMax} class="glass-surface rounded px-1 py-0.5">
-					{#each [4, 5, 6, 7] as v}<option value={v}>{v}</option>{/each}
-				</select>
-			</label>
+			<div class="flex flex-wrap items-center gap-2 text-xs" style="color: var(--text-secondary)">
+				<span>Skala mit</span>
+				{#each [4, 5, 6, 7] as n}
+					<button onclick={() => setScale(n)} class="rounded-full px-3 py-1" style="background: {form.scaleMax === n ? 'var(--accent)' : 'var(--surface-glass-strong)'}; color: {form.scaleMax === n ? 'var(--accent-contrast)' : 'var(--text-primary)'}">{n} Stufen</button>
+				{/each}
+			</div>
+			<p class="text-xs" style="color: var(--text-muted)">Beschriftung jeder Stufe (so sehen es die Teilnehmenden):</p>
+			<ol class="flex flex-col gap-2">
+				{#each form.labels as _l, i}
+					<li class="flex items-center gap-2"><span class="w-6 text-center text-xs" style="color: var(--text-muted)">{i + 1}</span>
+						<input bind:value={form.labels[i]} placeholder={`Stufe ${i + 1}`} class="glass-surface flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm" style="color: var(--text-primary)" /></li>
+				{/each}
+			</ol>
 		{/if}
-		{#if form.type === 'likert' || form.type === 'nps'}
-			<div class="flex gap-2">
-				<input placeholder="Beschriftung Minimum" bind:value={form.poleMin} class="glass-surface flex-1 rounded-[var(--radius-sm)] px-2 py-1 text-xs" />
-				<input placeholder="Beschriftung Maximum" bind:value={form.poleMax} class="glass-surface flex-1 rounded-[var(--radius-sm)] px-2 py-1 text-xs" />
+		{#if form.type === 'nps'}
+			<div class="grid gap-2 sm:grid-cols-2">
+				<input placeholder="Beschriftung 0" bind:value={form.poleMin} class="glass-surface rounded-[var(--radius-sm)] px-3 py-2 text-sm" />
+				<input placeholder="Beschriftung 10" bind:value={form.poleMax} class="glass-surface rounded-[var(--radius-sm)] px-3 py-2 text-sm" />
 			</div>
 		{/if}
 		{#if form.type === 'choice'}
-			<textarea placeholder="Antwortoptionen, eine pro Zeile (mind. 2)" rows="4" bind:value={form.optionsText} class="glass-surface rounded-[var(--radius-sm)] px-3 py-2 text-xs" style="color: var(--text-primary)"></textarea>
+			<p class="text-xs" style="color: var(--text-muted)">Antwortoptionen ({form.allowMultiple ? 'mehrere auswählbar' : 'genau eine auswählbar'}):</p>
+			<ol class="flex flex-col gap-2">
+				{#each form.options as _o, i}
+					<li class="flex items-center gap-2">
+						<span class="w-6 text-center" style="color: var(--text-muted)">{form.allowMultiple ? '☐' : '○'}</span>
+						<input bind:value={form.options[i]} placeholder={`Option ${i + 1}`} class="glass-surface flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm" style="color: var(--text-primary)" />
+						{#if form.options.length > 2}<button onclick={() => form.options.splice(i, 1)} class="px-2 text-sm" style="color: var(--danger)" aria-label="Option entfernen">✕</button>{/if}
+					</li>
+				{/each}
+			</ol>
+			<button onclick={() => form.options.push('')} class="self-start text-sm" style="color: var(--accent)">+ Option hinzufügen</button>
 			<label class="flex items-center gap-2 text-xs" style="color: var(--text-secondary)">
 				<input type="checkbox" bind:checked={form.allowMultiple} /> Mehrfachantworten möglich
 			</label>

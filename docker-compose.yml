@@ -100,7 +100,7 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
       OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://localhost:5173/auth/callback}
-      APP_SSO_SECRET: ${APP_SSO_SECRET:-}
+      APP_SSO_SECRET: ${APP_SSO_SECRET:-dev-only-app-sso-secret-change-in-prod}
       APP_SSO_ISSUER: ${APP_SSO_ISSUER:-mitarbeiter-app}
       OIDC_PERSON_CLAIM: ${OIDC_PERSON_CLAIM:-email}
       OIDC_PERSON_FIELD: ${OIDC_PERSON_FIELD:-email}

@@ -38,3 +38,10 @@ Format: Frage – getroffene Annahme – Auswirkung, falls die Annahme falsch is
 4. **HTTPS/Hosting:** Welche Domains und welche Infrastruktur (eigener Server, Azure, Kubernetes)? Annahme: ein Docker-Host mit Caddy. Zertifikate ggf. über die Firmen-CA statt Let's Encrypt.
 5. **PWA/Push:** Home-Bildschirm-Icon ist vorhanden. Echte Push-Erinnerungen setzen die Mitarbeiter-App-Anbindung (Push-API der App) voraus – offen.
 6. **Testgeräte:** Mobile Darstellung wurde in der Browser-Emulation (375×812) geprüft; ein Test auf echten iPhones/iPads und Kiosk-Geräten steht aus.
+
+## Neu: Rechte, Skalen, Mindestteamgröße
+1. **Rechte-Katalog:** Reichen die fünf Rechte (Umfragen, Runden, Auswertung ansehen, Benutzer/Organisation, Einstellungen)? Gewünscht evtl. feiner, z. B. Auswertung nur für den eigenen Fachbereich einschränken (Datenscope) oder Exporte separat berechtigen. *Annahme:* aktueller Katalog; Rollen frei kombinierbar.
+2. **Auswertungs-Admins und Betriebsrat/Datenschutz:** Dürfen Auswertungs-Admins alle Führungskräfte pseudonymisiert vergleichen (FK-A, FK-B …)? *Annahme:* ja, wie bisher; Namen der Führungskräfte sehen sie im Rücklauf (Runden-Dashboard) – ggf. ebenfalls pseudonymisieren?
+3. **Team < 3 während laufender Runde:** Wenn SAP zwischenzeitlich ein Team unter 3 Personen bringt, gilt der Start-Snapshot. Soll die Runde für dieses Team abgebrochen werden? *Annahme:* nein (Snapshot).
+4. **Skalenbeschriftungen:** Standardtexte („Trifft gar nicht zu … Trifft voll zu“) sind Vorschläge – bitte fachlich prüfen/anpassen. Mehrsprachigkeit der Beschriftungen offen.
+5. **Zugriffsrollen im Betrieb:** Sollen Rollen künftig aus Entra-ID-Gruppen kommen statt im Portal gepflegt zu werden? *Annahme:* Pflege im Portal.

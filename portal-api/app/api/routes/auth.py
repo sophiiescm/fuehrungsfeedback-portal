@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.db import get_db
 from app.models.person import Person, RoleAssignment
 from app.services import sso
+from app.services.permissions import get_permissions
 from app.services.login_codes import verify_login_code
 from app.services.rate_limit import login_limiter
 
@@ -41,6 +42,7 @@ class MeOut(BaseModel):
     full_name: str
     email: str | None
     roles: list[str]
+    permissions: list[str] = []
 
 
 def _require_dev_env() -> None:
@@ -78,12 +80,13 @@ def dev_login(payload: DevLoginIn, db: Session = Depends(get_db)) -> TokenOut:
 
 
 @router.get("/me", response_model=MeOut)
-def me(current_user: CurrentUser = Depends(get_current_user)) -> MeOut:
+def me(current_user: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)) -> MeOut:
     return MeOut(
         personalnummer=current_user.person.personalnummer,
         full_name=current_user.person.full_name,
         email=current_user.person.email,
         roles=[r.value for r in current_user.roles],
+        permissions=sorted(get_permissions(db, current_user.person)),
     )
 
 

@@ -22,6 +22,7 @@ class QuestionOut(BaseModel):
     scale_max: int | None
     pole_label_min: str | None
     pole_label_max: str | None
+    scale_labels: list[str] | None = None
     mandatory: bool
     sort_order: int
     help_text: str | None = None
@@ -40,6 +41,7 @@ class QuestionIn(BaseModel):
     scale_max: int | None = 5
     pole_label_min: str | None = None
     pole_label_max: str | None = None
+    scale_labels: list[str] | None = None
     mandatory: bool = True
     help_text: str | None = None
     options: list[str] | None = None
@@ -56,6 +58,7 @@ class QuestionUpdateIn(BaseModel):
     scale_max: int | None = None
     pole_label_min: str | None = None
     pole_label_max: str | None = None
+    scale_labels: list[str] | None = None
     mandatory: bool | None = None
     help_text: str | None = None
     options: list[str] | None = None

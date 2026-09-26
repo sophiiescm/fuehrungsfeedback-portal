@@ -24,7 +24,6 @@
 	<strong>🔒 Dein Feedback ist anonym.</strong>
 	<ul>
 		<li>Niemand sieht, <em>was</em> du geantwortet hast. Das Portal merkt sich nur, <em>dass</em> du teilgenommen hast.</li>
-		<li>Auswertungen gibt es erst ab 3 Antworten je Führungskraft – einzelne Personen sind nie erkennbar.</li>
 		<li>Freitexte werden automatisch von Namen und Kontaktdaten bereinigt.</li>
 	</ul>
 </div>

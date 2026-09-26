@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_role
+from app.api.deps import require_permission
 from app.db import get_db
 from app.models.person import Role
 from app.models.round import Participation, ParticipationStatus, Round, RoundStatus, RoundTarget
@@ -16,7 +16,12 @@ from app.services.round_lifecycle import (
     RoundLifecycleError, close_round, preview_recipients, send_reminders_now, start_round,
 )
 
-router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_role(Role.admin))])
+def _view_ok(path: str) -> bool:
+    """Auswertungs-Admins duerfen Rundenliste, Ruecklauf und Ruecklauf-CSV lesen (keine Codes/Steuerung)."""
+    return path == "/rounds" or path.endswith("/dashboard") or path.endswith("/response-rate.csv")
+
+
+router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_permission("rounds.manage", view_perms=("results.view",), view_path=_view_ok))])
 
 
 def _round_to_out(r: Round) -> RoundOut:

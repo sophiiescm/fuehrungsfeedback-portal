@@ -79,3 +79,15 @@ Assistent in 4 Schritten (Fragebogen, Zeitraum, Empfänger-Vorschau, Bestätigen
 
 ## Nr. 39 – Betrieb und DSGVO
 Caddy-HTTPS-Override (`docker-compose.prod.yml`), Backup-Skript, automatische Löschfristen inkl. Löschen der LimeSurvey-Rohantworten 90 Tage nach Rundenabschluss (Datenminimierung; Aggregate/Reports bleiben). Details: `docs/BETRIEB.md`.
+
+## Nr. 40 – Mindestteamgröße durchgängig (Feedback nur für Teams ≥ 3)
+Teams ergeben sich aus der SAP-Beziehung „direkte Führungskraft“ (Import). Führungskräfte mit Team < 3 bekommen keine Umfrage, deren Teammitglieder keine Einladung und keine Karte unter „Meine Feedbacks“ (zusätzlicher Filter in `/feedbacks/mine`, auch falls Altdaten existieren). Der Erklärtext zur 3-Personen-Regel wurde aus der Mitarbeiter-Ansicht entfernt (Fachseite); die Regel gilt unverändert technisch. Ändert der nächtliche SAP-Import ein Team während einer laufenden Runde, bleibt der Snapshot der Runde maßgeblich (Snapshot-Prinzip).
+
+## Nr. 41 – Skalenbeschriftung je Stufe, Mehrfachauswahl mit einzelnen Feldern
+Likert-Fragen speichern `scale_labels` (eine Beschriftung je Stufe, 4–7 Stufen, Vorschläge für 4/5/6/7); der Export nach LimeSurvey nutzt sie, sonst Altverhalten (Pole + Zahlen). Im Editor sind Antwortoptionen einzelne Eingabefelder mit „+ Option hinzufügen“; „Mehrfachantworten möglich“ erzeugt in LimeSurvey Checkboxen (Typ M).
+
+## Nr. 42 – Feingranulare Admin-Rechte (Zugriffsrollen)
+`Role.admin` = Zugang zum Verwaltungsbereich; die Rechte kommen aus frei anlegbaren Zugriffsrollen (Tabellen `access_role`, `person_access_role`): `surveys.manage`, `rounds.manage`, `results.view`, `users.manage`, `settings.manage`. Vordefiniert: Vollzugriff, „Umfrage & Auswertung“, „Nur Auswertung“. Durchsetzung serverseitig je Router (`require_permission`); Auswertungs-Admins dürfen zusätzlich Rundenliste, Rücklauf, Rücklauf-CSV und die Fachbereichsliste lesen. Kein Recht gibt Zugriff auf Rohantworten (existieren im Portal nicht). Schutz: mindestens eine Person mit `settings.manage` muss bleiben; Admins ohne Zugriffsrolle (Altbestand) haben Vollzugriff; nach Löschen einer Rolle verlieren Personen ohne weitere Rolle den Admin-Zugang. UI: Einstellungen → Nutzer & Rechte; Menüpunkte richten sich nach den Rechten.
+
+## Nr. 43 – Entwickler-Ansichten
+Nur bei `APP_ENV=dev`: Schnellzugriff auf Beispielpersonen (Admin, Führungskraft, Mitarbeiter mit offenem Feedback, Produktion ohne E-Mail) auf der Login-Seite und als „Ansicht wechseln“ in der Navigation; Simulator der Mitarbeiter-App (`/dev/mitarbeiter-app`) stellt eine Trusted-App-SSO-Assertion aus. Der Dev-Standardwert für `APP_SSO_SECRET` steht nur in `docker-compose.yml`; `docker-compose.prod.yml` verlangt ein eigenes Secret und setzt `APP_ENV=prod` (alle `/dev/*`-Routen 404).

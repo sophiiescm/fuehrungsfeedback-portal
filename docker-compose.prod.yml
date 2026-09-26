@@ -23,10 +23,14 @@ services:
       - portal-api
       - limesurvey
 
+  portal-api:
+    ports: !reset []
+    environment:
+      APP_SSO_SECRET: ${APP_SSO_SECRET:?APP_SSO_SECRET setzen}
+      APP_ENV: prod
+
   # Interne Dienste nicht mehr direkt nach aussen veroeffentlichen
   portal-web:
-    ports: !reset []
-  portal-api:
     ports: !reset []
   limesurvey:
     ports: !reset []

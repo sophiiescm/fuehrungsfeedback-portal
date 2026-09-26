@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_role
+from app.api.deps import require_permission
 from app.db import get_db
 from app.models.person import Role
 from app.models.survey import Dimension, Question, QuestionType, SurveyTemplate, SurveyVersion
@@ -31,7 +31,7 @@ from app.services.survey_versioning import (
     sync_lock_status,
 )
 
-router = APIRouter(prefix="/surveys", tags=["surveys"], dependencies=[Depends(require_role(Role.admin))])
+router = APIRouter(prefix="/surveys", tags=["surveys"], dependencies=[Depends(require_permission("surveys.manage"))])
 
 
 def _get_version_or_404(db: Session, version_id: int) -> SurveyVersion:
@@ -42,8 +42,19 @@ def _get_version_or_404(db: Session, version_id: int) -> SurveyVersion:
 
 
 QUESTION_FIELDS = ("id", "dimension_id", "type", "text", "scale_min", "scale_max", "pole_label_min",
-                   "pole_label_max", "mandatory", "sort_order", "help_text", "options", "allow_multiple",
+                   "pole_label_max", "scale_labels", "mandatory", "sort_order", "help_text", "options", "allow_multiple",
                    "show_if_question_id", "show_if_operator", "show_if_value")
+
+
+def _clean_labels(labels, scale_min, scale_max, q_type):
+    """Beschriftung je Skalenstufe: nur fuer Likert, Anzahl muss zur Skala passen, keine leeren Texte."""
+    if q_type != QuestionType.likert or not labels:
+        return None
+    n = (scale_max or 5) - (scale_min or 1) + 1
+    cleaned = [x.strip() for x in labels]
+    if len(cleaned) != n or any(not x for x in cleaned):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Für die Skala werden genau {n} Beschriftungen benötigt")
+    return cleaned
 
 
 def _q_out(q: Question) -> QuestionOut:
@@ -184,6 +195,7 @@ def add_question(version_id: int, payload: QuestionIn, db: Session = Depends(get
         scale_max=payload.scale_max,
         pole_label_min=payload.pole_label_min,
         pole_label_max=payload.pole_label_max,
+        scale_labels=_clean_labels(payload.scale_labels, payload.scale_min, payload.scale_max, payload.type),
         mandatory=payload.mandatory,
         sort_order=max_order + 1,
         help_text=payload.help_text,
@@ -215,6 +227,10 @@ def update_question(question_id: int, payload: QuestionUpdateIn, db: Session = D
         data.get("show_if_question_id", question.show_if_question_id),
         data.get("show_if_operator", question.show_if_operator), own_id=question.id,
     )
+    if "scale_labels" in data:
+        data["scale_labels"] = _clean_labels(
+            data["scale_labels"], data.get("scale_min", question.scale_min), data.get("scale_max", question.scale_max), question.type
+        )
     for field, value in data.items():
         setattr(question, field, value)
     db.commit()

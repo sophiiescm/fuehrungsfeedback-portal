@@ -5,9 +5,9 @@ import re
 
 from app.main import app
 
-PUBLIC = {"/health", "/auth/dev-login", "/auth/dev-login/users", "/auth/code-login", "/auth/oidc/login", "/auth/oidc/callback", "/auth/app-sso", "/auth/methods",
+PUBLIC = {"/health", "/auth/dev-login", "/auth/dev-login/users", "/auth/code-login", "/auth/oidc/login", "/auth/oidc/callback", "/auth/app-sso", "/auth/methods", "/dev/personas", "/dev/app-assertion",
           "/feedbacks/webhook/limesurvey-complete"}
-ADMIN_PREFIXES = ("/organisation", "/surveys", "/rounds", "/mail-templates", "/benchmark")
+ADMIN_PREFIXES = ("/organisation", "/surveys", "/rounds", "/mail-templates", "/benchmark", "/access")
 
 
 def _routes():

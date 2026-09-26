@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_role
+from app.api.deps import require_permission
+from app.models.access import PersonAccessRole
 from app.core.config import get_settings
 from app.db import get_db
 from app.models.person import OrgUnit, Person, Role, RoleAssignment
@@ -28,7 +29,7 @@ from app.services.org_source import CsvOrgSource, OrgSourceError
 from app.services.roles import recompute_roles
 from app.services.scheduler import get_schedule_config, set_schedule_config
 
-router = APIRouter(prefix="/organisation", tags=["organisation"], dependencies=[Depends(require_role(Role.admin))])
+router = APIRouter(prefix="/organisation", tags=["organisation"], dependencies=[Depends(require_permission("users.manage", view_perms=("results.view", "rounds.manage"), view_path=lambda p: p == "/organisation/fachbereiche"))])
 
 
 def _diff_to_schema(diff: ImportDiff) -> ImportDiffOut:
@@ -207,6 +208,7 @@ def set_admin_role(person_id: int, payload: SetAdminRoleIn, db: Session = Depend
         db.add(RoleAssignment(person_id=person_id, role=Role.admin))
     elif not payload.is_admin and existing is not None:
         db.delete(existing)
+        db.query(PersonAccessRole).filter(PersonAccessRole.person_id == person_id).delete()
     db.commit()
 
     return get_person(person_id, db)

@@ -96,6 +96,7 @@ def seed() -> SurveyTemplate:
                         scale_max=5,
                         pole_label_min="Trifft gar nicht zu",
                         pole_label_max="Trifft voll zu",
+                        scale_labels=["Trifft gar nicht zu", "Trifft eher nicht zu", "Teils/teils", "Trifft eher zu", "Trifft voll zu"],
                         mandatory=True,
                         sort_order=question_order,
                     )

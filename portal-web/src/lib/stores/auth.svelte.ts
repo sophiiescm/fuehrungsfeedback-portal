@@ -7,6 +7,7 @@ export interface CurrentUser {
 	full_name: string;
 	email: string | null;
 	roles: Role[];
+	permissions?: string[];
 }
 
 const STORAGE_KEY = 'ffp_token';
@@ -17,6 +18,10 @@ class AuthState {
 
 	get isAuthenticated() {
 		return this.token !== null;
+	}
+
+	can(permission: string) {
+		return this.user?.permissions?.includes(permission) ?? false;
 	}
 
 	hasRole(role: Role) {

@@ -132,7 +132,10 @@ def build_tsv(version: SurveyVersion, language: str = "de") -> str:
                 scale_max = q.scale_max or 5
                 for point in range(scale_min, scale_max + 1):
                     label = ""
-                    if point == scale_min:
+                    idx = point - scale_min
+                    if q.scale_labels and len(q.scale_labels) == scale_max - scale_min + 1:
+                        label = q.scale_labels[idx]
+                    elif point == scale_min:
                         label = q.pole_label_min or str(point)
                     elif point == scale_max:
                         label = q.pole_label_max or str(point)

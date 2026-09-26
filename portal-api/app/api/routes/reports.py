@@ -3,7 +3,7 @@ from jinja2 import Template
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import CurrentUser, get_current_user, require_role
+from app.api.deps import CurrentUser, get_current_user, require_permission
 from app.db import get_db
 from app.models.person import Person, Role
 from app.models.result import Report, ResultAggregate
@@ -14,7 +14,7 @@ from app.services import evaluation, pdf_letters, textanalysis
 from app.services.stats import effective_threshold
 
 router = APIRouter(tags=["reports"])
-admin_router = APIRouter(dependencies=[Depends(require_role(Role.admin))], tags=["evaluation"])
+admin_router = APIRouter(dependencies=[Depends(require_permission("rounds.manage", view_perms=("results.view",)))], tags=["evaluation"])
 
 VISIBLE = (RoundStatus.ausgewertet, RoundStatus.berichtet)
 

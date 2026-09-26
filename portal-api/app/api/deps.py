@@ -61,3 +61,37 @@ def require_role(*allowed_roles: Role):
         return current_user
 
     return _dependency
+
+
+def require_permission(*perms: str, view_perms: tuple[str, ...] = (), view_path=None):
+    """Admin-Zugang plus mindestens eines der Rechte `perms`. Optional duerfen Inhaber eines der
+    `view_perms` reine GET-Abrufe machen (optional nur fuer Pfade, die `view_path(path)` erlaubt)."""
+
+    def _dependency(
+        request: Request,
+        current_user: CurrentUser = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> CurrentUser:
+        from app.services.permissions import get_permissions
+
+        if Role.admin not in current_user.roles:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Keine Berechtigung fuer diese Aktion")
+        have = get_permissions(db, current_user.person)
+        allowed = bool(have & set(perms))
+        if not allowed and request.method == "GET" and have & set(view_perms):
+            allowed = view_path is None or view_path(request.url.path)
+        if not allowed:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Keine Berechtigung fuer diese Aktion")
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            from app.models.system import AuditLog
+
+            db.add(AuditLog(
+                actor_person_id=current_user.person.id,
+                action=f"{request.method} {request.url.path}",
+                target_type="http",
+                detail={"query": dict(request.query_params)},
+            ))
+            db.commit()
+        return current_user
+
+    return _dependency

@@ -65,6 +65,7 @@ def clone_as_new_version(db: Session, version: SurveyVersion) -> SurveyVersion:
                 scale_min=q.scale_min,
                 scale_max=q.scale_max,
                 pole_label_min=q.pole_label_min,
+                scale_labels=q.scale_labels,
                 pole_label_max=q.pole_label_max,
                 mandatory=q.mandatory,
                 sort_order=q.sort_order,
