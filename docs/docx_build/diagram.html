@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  html,body{margin:0;padding:0;background:#ffffff;}
+  #wrap{display:inline-block;padding:24px;background:#ffffff;font-family:Arial,sans-serif;}
+</style>
+</head>
+<body>
+<div id="wrap">
+<pre class="mermaid">
+flowchart LR
+  N["Nutzer<br/>Mitarbeitende / Fuehrungskraefte / HR"]
+
+  subgraph PORTAL["Feedback-Portal (Eigenentwicklung)"]
+    direction TB
+    WEB["Portal-Web<br/>SvelteKit"]
+    API["Portal-API<br/>FastAPI"]
+    DB[("PostgreSQL<br/>Organisation - Rollen - Runden - Reports")]
+    WEB --> API
+    API --> DB
+  end
+
+  LS["LimeSurvey<br/>1 Umfrage je Fuehrungskraft + Runde"]
+  LSDB[("MariaDB<br/>Rohantworten, 90 Tage")]
+  SAP[("SAP / SuccessFactors")]
+  SSO["Entra ID<br/>Single Sign-on"]
+  MAIL["Mailserver<br/>Outlook / SMTP"]
+  KI["KI-Provider<br/>optional, austauschbar"]
+
+  N --> WEB
+  API <--> LS
+  LS --> LSDB
+  API <--> SAP
+  API <--> SSO
+  API --> MAIL
+  API --> KI
+</pre>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#eef4ee',
+      primaryBorderColor: '#4f8a58',
+      primaryTextColor: '#1c2620',
+      lineColor: '#4f8a58',
+      secondaryColor: '#fdf6ec',
+      tertiaryColor: '#ffffff',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '16px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+</body>
+</html>

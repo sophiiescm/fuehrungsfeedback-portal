@@ -1,0 +1,495 @@
+<title>Führungsfeedback-Portal</title>
+<style>
+  :root {
+    --bg: #f6faf6;
+    --bg-alt: #eef4ee;
+    --surface: #ffffff;
+    --surface-2: #eef4ee;
+    --border: rgba(28, 38, 32, 0.12);
+    --text: #1c2620;
+    --text-2: #48564c;
+    --text-muted: #6b7a70;
+
+    --accent: #78ab78;
+    --accent-ink: #2f6b3a;
+    --accent-contrast: #10231a;
+    --accent-soft: rgba(120, 171, 120, 0.16);
+
+    --role-ma: #4f8a58;
+    --role-fk: #2f7d8c;
+    --role-admin: #a3711f;
+
+    --good: #2f8f52;
+    --warn: #a3711f;
+    --bad: #a5432c;
+
+    --radius: 14px;
+    --radius-lg: 20px;
+    --shadow: 0 10px 30px rgba(28, 45, 32, 0.08);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1812;
+      --bg-alt: #101d15;
+      --surface: #16241b;
+      --surface-2: #1b2c20;
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #eef5ee;
+      --text-2: #c3d1c7;
+      --text-muted: #93a599;
+
+      --accent: #78ab78;
+      --accent-ink: #9fd0a0;
+      --accent-contrast: #10231a;
+      --accent-soft: rgba(120, 171, 120, 0.22);
+
+      --role-ma: #8fc08f;
+      --role-fk: #7fb8c9;
+      --role-admin: #e0b45c;
+
+      --good: #6fd08c;
+      --warn: #e3b34c;
+      --bad: #ff8a72;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1812;
+    --bg-alt: #101d15;
+    --surface: #16241b;
+    --surface-2: #1b2c20;
+    --border: rgba(255, 255, 255, 0.12);
+    --text: #eef5ee;
+    --text-2: #c3d1c7;
+    --text-muted: #93a599;
+
+    --accent: #78ab78;
+    --accent-ink: #9fd0a0;
+    --accent-contrast: #10231a;
+    --accent-soft: rgba(120, 171, 120, 0.22);
+
+    --role-ma: #8fc08f;
+    --role-fk: #7fb8c9;
+    --role-admin: #e0b45c;
+
+    --good: #6fd08c;
+    --warn: #e3b34c;
+    --bad: #ff8a72;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(circle at 100% 0%, var(--accent-soft), transparent 45%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: "Newsreader", Georgia, serif; text-wrap: balance; color: var(--text); margin: 0; }
+  a { color: var(--accent-ink); }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px calc(14px + env(safe-area-inset-top, 0px));
+    padding-top: 14px;
+  }
+  .topbar-inner { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
+    background: var(--accent); color: var(--accent-contrast);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-name { font-family: "Newsreader", serif; font-size: 1.15rem; font-weight: 600; }
+  .brand-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: -2px; }
+
+  .pillnav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+  .pillnav a {
+    flex: 0 0 auto; white-space: nowrap; text-decoration: none;
+    color: var(--text-2); font-size: 0.82rem; font-weight: 600;
+    padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .pillnav a.active { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
+
+  main { max-width: 780px; margin: 0 auto; padding: 28px 16px 80px; }
+  main.wide { max-width: 980px; }
+  section { scroll-margin-top: 128px; padding: 34px 0; border-bottom: 1px solid var(--border); }
+  section:last-child { border-bottom: none; }
+
+  .eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 6px; }
+  h2 { font-size: 1.55rem; margin-bottom: 10px; }
+  .lede { color: var(--text-2); font-size: 1rem; max-width: 62ch; margin: 0 0 20px; }
+
+  /* Hero */
+  .hero { padding: 8px 0 30px; }
+  .hero h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); margin-bottom: 12px; }
+  .hero p.lede { font-size: 1.06rem; max-width: 64ch; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 22px; }
+  @media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+  .stat b { display: block; font-family: "Newsreader", serif; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 0.78rem; color: var(--text-muted); }
+
+  .steps { display: grid; gap: 10px; margin-top: 8px; }
+  @media (min-width: 640px) { .steps { grid-template-columns: repeat(4, 1fr); } }
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .step .num { font-family: "Newsreader", serif; font-size: 1.6rem; color: var(--accent-ink); }
+  .step h3 { font-size: 0.98rem; margin: 6px 0 4px; }
+  .step p { font-size: 0.85rem; color: var(--text-2); margin: 0; }
+
+  /* Feature cards */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 16px 16px 18px; border-left: 4px solid var(--role-color, var(--accent));
+  }
+  .card h3 { font-family: "Public Sans", sans-serif; font-size: 0.98rem; font-weight: 700; margin-bottom: 5px; }
+  .card p { margin: 0; color: var(--text-2); font-size: 0.9rem; }
+  .role-ma { --role-color: var(--role-ma); }
+  .role-fk { --role-color: var(--role-fk); }
+  .role-admin { --role-color: var(--role-admin); }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 0.02em;
+  }
+  .tag.ma { background: color-mix(in srgb, var(--role-ma) 18%, transparent); color: var(--role-ma); }
+  .tag.fk { background: color-mix(in srgb, var(--role-fk) 18%, transparent); color: var(--role-fk); }
+  .tag.admin { background: color-mix(in srgb, var(--role-admin) 18%, transparent); color: var(--role-admin); }
+
+  /* Rules callout */
+  .rules {
+    background: var(--surface-2); border: 1px solid var(--border); border-left: 5px solid var(--bad);
+    border-radius: var(--radius-lg); padding: 20px 22px;
+  }
+  .rules h3 { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--bad); margin-bottom: 12px; }
+  .rules ul { margin: 0; padding-left: 1.15em; display: grid; gap: 9px; }
+  .rules li { color: var(--text); font-size: 0.93rem; }
+  .rules li b { color: var(--text); }
+
+  /* Diagram + component table */
+  pre.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; overflow-x: auto; box-shadow: var(--shadow); }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  tr:last-child td { border-bottom: none; }
+  td.mono { color: var(--text-2); }
+
+  .checklist { display: grid; gap: 18px; }
+  @media (min-width: 640px) { .checklist { grid-template-columns: 1fr 1fr; } }
+  .checklist h3 { font-size: 0.95rem; margin-bottom: 10px; }
+  .checklist ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .checklist li { display: flex; gap: 9px; font-size: 0.9rem; color: var(--text-2); align-items: flex-start; }
+  .checklist li svg { flex: 0 0 auto; margin-top: 3px; }
+  .done svg { color: var(--good); }
+  .next svg { color: var(--warn); }
+
+  footer { max-width: 780px; margin: 0 auto; padding: 20px 16px 50px; color: var(--text-muted); font-size: 0.8rem; }
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Führungsfeedback-Portal</div>
+        <div class="brand-sub">Funktionsüberblick &amp; technische Architektur</div>
+      </div>
+    </div>
+    <nav class="pillnav" id="nav">
+      <a href="#ueberblick">Überblick</a>
+      <a href="#mitarbeiter">Mitarbeitende</a>
+      <a href="#fuehrungskraft">Führungskräfte</a>
+      <a href="#admin-umfrage">Umfrage gestalten</a>
+      <a href="#admin-runden">Befragungsrunden</a>
+      <a href="#admin-auswertung">Auswertung</a>
+      <a href="#admin-report">Report-Layout</a>
+      <a href="#admin-org">Organisation &amp; Rechte</a>
+      <a href="#anonymitaet">Anonymität</a>
+      <a href="#architektur">Architektur</a>
+      <a href="#stand">Stand</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+
+  <section id="ueberblick" class="hero">
+    <p class="eyebrow">Was ist das Führungsfeedback-Portal</p>
+    <h1>Anonymes 360°-Feedback für Führungskräfte</h1>
+    <p class="lede">
+      Mitarbeitende bewerten halbjährlich anonym ihre direkte Führungskraft. Führungskräfte bewerten wiederum
+      ihre eigene Führungskraft. Aus den Antworten entsteht automatisch ein Report je Führungskraft &ndash;
+      erst ab drei Antworten, damit niemand Rückschlüsse auf eine einzelne Person ziehen kann.
+      HR behält die Organisation, die Umfrage-Inhalte und den Rücklauf im Blick.
+    </p>
+
+    <div class="stats">
+      <div class="stat"><b>3</b><span>Rollen: Mitarbeiter, Führungskraft, Admin</span></div>
+      <div class="stat"><b>4</b><span>Fragetypen inkl. Verzweigungen</span></div>
+      <div class="stat"><b>20</b><span>Sprachen je Fragebogen wählbar</span></div>
+      <div class="stat"><b>4</b><span>Report-Formate: PDF · PowerPoint · Excel · CSV</span></div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:32px">So funktioniert es</p>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Runde anlegen</h3><p>HR wählt Fragebogen &amp; Zeitraum &ndash; einmalig oder automatisch wiederkehrend.</p></div>
+      <div class="step"><div class="num">2</div><h3>Anonym bewerten</h3><p>Mitarbeitende füllen den Fragebogen aus &ndash; am Handy, Tablet oder PC.</p></div>
+      <div class="step"><div class="num">3</div><h3>Report entsteht</h3><p>Ab drei Antworten wertet das System automatisch aus und schwärzt Freitexte.</p></div>
+      <div class="step"><div class="num">4</div><h3>Maßnahmen ableiten</h3><p>Führungskraft sieht den Report und leitet Maßnahmen fürs Team ab.</p></div>
+    </div>
+  </section>
+
+  <section id="mitarbeiter">
+    <span class="tag ma">FÜR MITARBEITENDE</span>
+    <h2>Feedback geben, im Blick behalten</h2>
+    <p class="lede">Die Ansicht für alle: schnell verständlich, wenige Klicks, auf jedem Gerät.</p>
+    <div class="grid">
+      <div class="card role-ma"><h3>Ein Dashboard, eine Aufgabe</h3><p>„Du hast 2 offene Feedbacks“ oder „Alles erledigt“ &ndash; mit Fälligkeitsdatum, ohne Umwege.</p></div>
+      <div class="card role-ma"><h3>Feedback in ~5 Minuten</h3><p>Große Antwort-Kacheln, Fortschrittsanzeige, funktioniert auf Handy, Tablet und Kiosk-PC.</p></div>
+      <div class="card role-ma"><h3>Vertrauens-Hinweis</h3><p>Vor jeder Umfrage steht in Klartext, was mit den Antworten passiert &ndash; und was nicht.</p></div>
+      <div class="card role-ma"><h3>Teilnahme-Verlauf</h3><p>„Meine Feedbacks“ zeigt jede Runde: abgegeben, offen oder verpasst.</p></div>
+      <div class="card role-ma"><h3>Eigene Antworten ansehen</h3><p>Nach der Abgabe nur lesbar und nur auf dem eigenen Gerät gespeichert &ndash; nicht auf dem Server.</p></div>
+      <div class="card role-ma"><h3>Maßnahmen der Führungskraft</h3><p>„Was hat sich getan?“ &ndash; freigegebene Maßnahmen des eigenen Teams einsehen.</p></div>
+      <div class="card role-ma"><h3>Persönliche Sprache</h3><p>Eigene Sprache für den Fragebogen wählen, wenn dieser mehrsprachig angeboten wird.</p></div>
+      <div class="card role-ma"><h3>Anmeldung für alle</h3><p>Single Sign-on (Entra ID), Personalnummer + Einmalcode für Personen ohne E-Mail, Kiosk-Modus mit Auto-Abmeldung.</p></div>
+    </div>
+  </section>
+
+  <section id="fuehrungskraft">
+    <span class="tag fk">FÜR FÜHRUNGSKRÄFTE</span>
+    <h2>Den eigenen Report verstehen und nutzen</h2>
+    <p class="lede">Alles aus der Mitarbeiter-Ansicht, zusätzlich der eigene Feedback-Report.</p>
+    <div class="grid">
+      <div class="card role-fk"><h3>Report in vier Reitern</h3><p>Überblick, Themen im Detail, Freitexte, Verlauf über mehrere Runden &ndash; klar getrennt.</p></div>
+      <div class="card role-fk"><h3>Einordnung auf einen Blick</h3><p>Vergleich mit Fachbereich, Unternehmen und Vorrunde; Ampel zeigt sofort, wo man steht.</p></div>
+      <div class="card role-fk"><h3>Weiterempfehlung (NPS)</h3><p>Würde mich mein Team weiterempfehlen? Mit Kritikern/Neutralen/Fans und Referenzwert.</p></div>
+      <div class="card role-fk"><h3>Freitexte verständlich</h3><p>Wortwolke, nach Themen gruppiert, optional KI-Zusammenfassung &ndash; immer geschwärzt.</p></div>
+      <div class="card role-fk"><h3>Export in vier Formaten</h3><p>Eigenen Report als PDF, PowerPoint, Excel oder CSV herunterladen.</p></div>
+      <div class="card role-fk"><h3>Maßnahmen ableiten</h3><p>Themenvorschläge aus dem Report übernehmen, Maßnahmen anlegen und fürs Team freigeben.</p></div>
+    </div>
+  </section>
+
+  <section id="admin-umfrage">
+    <span class="tag admin">ADMIN</span>
+    <h2>Umfrage gestalten</h2>
+    <p class="lede">Der Fragebogen entsteht im Portal &ndash; ohne LimeSurvey-Kenntnisse.</p>
+    <div class="grid">
+      <div class="card role-admin"><h3>Themen &amp; Reihenfolge</h3><p>Dimensionen frei anlegen, Fragen per Drag &amp; Drop sortieren.</p></div>
+      <div class="card role-admin"><h3>Vier Fragetypen</h3><p>Likert-Skala (4&ndash;7 Stufen, jede Stufe frei beschriftbar), Weiterempfehlung (NPS), Einfach-/Mehrfachauswahl, Freitext.</p></div>
+      <div class="card role-admin"><h3>Verzweigungen</h3><p>Eine Frage nur zeigen, wenn eine frühere Frage eine Bedingung erfüllt.</p></div>
+      <div class="card role-admin"><h3>Mehrsprachig</h3><p>Beliebige Zusatzsprachen, Übersetzungsansicht mit Fortschritt, optionale KI-Übersetzung &ndash; fehlende Texte fallen auf Deutsch zurück.</p></div>
+      <div class="card role-admin"><h3>Versionierung</h3><p>Eine in Nutzung befindliche Version ist gesperrt; Änderungen laufen über „als neue Version bearbeiten“.</p></div>
+      <div class="card role-admin"><h3>Veröffentlichen</h3><p>Ein Klick überträgt den Fragebogen nach LimeSurvey &ndash; passiert sonst automatisch beim Rundenstart.</p></div>
+    </div>
+  </section>
+
+  <section id="admin-runden">
+    <span class="tag admin">ADMIN</span>
+    <h2>Befragungsrunden</h2>
+    <p class="lede">Vom Anlegen bis zur Erinnerung &ndash; in einem Assistenten.</p>
+    <div class="grid">
+      <div class="card role-admin"><h3>Runden-Assistent</h3><p>Drei Schritte: Fragebogen wählen, Zeitraum festlegen, bestätigen.</p></div>
+      <div class="card role-admin"><h3>Automatisch wiederkehrend</h3><p>Vierteljährlich, halbjährlich oder jährlich &ndash; die nächste Runde entsteht von selbst.</p></div>
+      <div class="card role-admin"><h3>Teams immer aktuell</h3><p>Vor jedem Rundenstart werden die Teams automatisch aus SAP aktualisiert.</p></div>
+      <div class="card role-admin"><h3>Rücklauf im Blick</h3><p>Dashboard je Fachbereich, „Erinnerung an alle Offenen“ (höchstens einmal pro Tag).</p></div>
+      <div class="card role-admin"><h3>Ohne E-Mail-Adresse</h3><p>Code-Briefe mit QR-Code und ein Team-Aushang &ndash; ohne Teilnahmestatus einzelner Personen.</p></div>
+      <div class="card role-admin"><h3>Export</h3><p>Rücklauf je Fachbereich als CSV herunterladen.</p></div>
+    </div>
+  </section>
+
+  <section id="admin-auswertung">
+    <span class="tag admin">ADMIN</span>
+    <h2>Auswertung &amp; Benchmarking</h2>
+    <p class="lede">Kennzahlen für HR &ndash; nie mit Bezug auf eine einzelne Antwort.</p>
+    <div class="grid">
+      <div class="card role-admin"><h3>Statistik je Frage/Thema</h3><p>n, Minimum, Maximum, Mittelwert, Median, Standardabweichung, Verteilung.</p></div>
+      <div class="card role-admin"><h3>Frei wählbare Gruppen</h3><p>Fachbereiche miteinander vergleichen, als Balken- oder Ampel-Ansicht.</p></div>
+      <div class="card role-admin"><h3>Pseudonymer Benchmark</h3><p>Führungskräfte untereinander vergleichen &ndash; als „FK-A“, „FK-B“, nie mit echtem Namen.</p></div>
+      <div class="card role-admin"><h3>Unternehmensweiter NPS</h3><p>Mit manuell pflegbarem Referenzwert, z. B. aus einer Branchenstudie.</p></div>
+      <div class="card role-admin"><h3>Freitext-Themen</h3><p>Wortwolke und Kategorien (KI oder Schlüsselwörter) &ndash; erst ab drei Texten sichtbar.</p></div>
+      <div class="card role-admin"><h3>Export</h3><p>Als Excel, PowerPoint oder CSV, ohne unterdrückte Kleingruppen.</p></div>
+    </div>
+  </section>
+
+  <section id="admin-report">
+    <span class="tag admin">ADMIN</span>
+    <h2>Report-Layout</h2>
+    <p class="lede">Aufbau und Wortlaut jedes Führungskraft-Reports zentral festlegen &ndash; mit Live-Vorschau.</p>
+    <div class="grid">
+      <div class="card role-admin"><h3>Abschnitte steuern</h3><p>Ein-/ausblenden und per Pfeil in beliebige Reihenfolge bringen.</p></div>
+      <div class="card role-admin"><h3>Eigene Textbausteine</h3><p>Bis zu zehn frei formulierte Abschnitte an beliebiger Stelle einfügen.</p></div>
+      <div class="card role-admin"><h3>Feste Formulierungen anpassen</h3><p>z. B. „Das läuft gut“ umbenennen &ndash; mit Rückfall auf den Standardtext.</p></div>
+      <div class="card role-admin"><h3>Platzhalter</h3><p>{leader}, {overall}, {best_topic} u. a. werden automatisch mit echten Werten befüllt.</p></div>
+      <div class="card role-admin"><h3>Farbe &amp; Vorschau</h3><p>Akzentfarbe wählen, Änderungen sofort in der Live-Vorschau mit Beispieldaten sehen.</p></div>
+      <div class="card role-admin"><h3>Beispiel-Downloads</h3><p>Vor dem Speichern in allen vier Formaten testen.</p></div>
+    </div>
+  </section>
+
+  <section id="admin-org">
+    <span class="tag admin">ADMIN</span>
+    <h2>Organisation &amp; Rechte</h2>
+    <p class="lede">Wer im Unternehmen wen führt &ndash; und wer im Portal was darf.</p>
+    <div class="grid">
+      <div class="card role-admin"><h3>SAP-Import</h3><p>CSV heute, SuccessFactors-Anbindung vorbereitet; Trockenlauf mit Diff-Ansicht vor der Übernahme.</p></div>
+      <div class="card role-admin"><h3>Organigramm</h3><p>Teamgrößen auf einen Blick; Teams unter drei Personen automatisch als „nicht auswertbar“ markiert.</p></div>
+      <div class="card role-admin"><h3>Personen verwalten</h3><p>Suchen, Admin-Zugang vergeben oder entziehen.</p></div>
+      <div class="card role-admin"><h3>Feine Rechte</h3><p>Eigene Zugriffsrollen anlegen &ndash; z. B. „nur Auswertung ansehen“ statt Vollzugriff.</p></div>
+      <div class="card role-admin"><h3>Audit-Log</h3><p>Jede administrative Änderung wird nachvollziehbar protokolliert.</p></div>
+      <div class="card role-admin"><h3>Automatische Löschfristen</h3><p>Rohantworten, Codes und Protokolle werden nach festen Fristen automatisch entfernt.</p></div>
+    </div>
+  </section>
+
+  <section id="anonymitaet">
+    <p class="eyebrow">Grundprinzip der Plattform</p>
+    <h2>Anonymität &amp; Sicherheit</h2>
+    <p class="lede">Diese Regeln sind technisch erzwungen, nicht nur vereinbart.</p>
+    <div class="rules">
+      <h3>Nicht verhandelbar</h3>
+      <ul>
+        <li><b>Team-Schwelle:</b> Eine Führungskraft wird nur bewertet, wenn ihr Team mindestens drei Personen hat.</li>
+        <li><b>Berichts-Schwelle:</b> Ein Report oder eine Kennzahl erscheint erst ab drei abgegebenen Antworten &ndash; auf jeder Auswertungsebene.</li>
+        <li><b>Getrennte Systeme:</b> Jede Führungskraft bekommt je Runde eine eigene Umfrage in LimeSurvey. Das Portal weiß nur „diese Person hat teilgenommen“, nie „was sie geantwortet hat“.</li>
+        <li><b>Geschwärzte Freitexte:</b> Namen, E-Mails und Telefonnummern werden automatisch entfernt, die Reihenfolge wird gemischt.</li>
+        <li><b>Keine Rohantworten für Admins:</b> Auch HR sieht niemals eine einzelne Antwort mit Personenbezug.</li>
+        <li><b>Eigene Antworten:</b> Nach der Abgabe nur als schreibgeschützte Kopie auf dem eigenen Gerät sichtbar &ndash; nie auf dem Server gespeichert.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="architektur">
+    <p class="eyebrow">Technische Seite</p>
+    <h2>Architektur im Überblick</h2>
+    <p class="lede">
+      Zwei Systeme mit klarer Aufgabenteilung: Das <b>Feedback-Portal</b> ist Eigenentwicklung und steuert
+      Organisation, Rollen, Runden und Reports. <b>LimeSurvey</b> bleibt unverändert der reine „Umfrage-Motor“
+      und bleibt dadurch update- und supportfähig.
+    </p>
+
+<pre class="mermaid">
+flowchart TB
+  MA["Mitarbeitende"]
+  FK["Führungskräfte"]
+  HR["HR / Admin"]
+
+  subgraph PORTAL["Feedback-Portal (Eigenentwicklung)"]
+    WEB["Portal-Web<br/>SvelteKit"]
+    API["Portal-API<br/>FastAPI"]
+    DB[("PostgreSQL<br/>Organisation · Rollen · Runden · Reports")]
+    WEB --> API
+    API --> DB
+  end
+
+  subgraph ENGINE["Umfrage-Motor"]
+    LS["LimeSurvey<br/>1 Umfrage je Führungskraft + Runde"]
+    LSDB[("MariaDB<br/>Rohantworten, 90 Tage")]
+    LS --> LSDB
+  end
+
+  SAP[("SAP / SuccessFactors")]
+  SSO["Entra ID<br/>Single Sign-on"]
+  MAIL["Mailserver<br/>Outlook / SMTP"]
+  KI["KI-Provider<br/>optional, austauschbar"]
+
+  MA --> WEB
+  FK --> WEB
+  HR --> WEB
+  MA -. Fragebogen ausfüllen .-> LS
+  API -- Umfrage anlegen / auswerten --> LS
+  LS -- Webhook: teilgenommen --> API
+  API <-- Teams &amp; Organisation --> SAP
+  API <-- Anmeldung --> SSO
+  API -- Einladung / Erinnerung --> MAIL
+  API -- Zusammenfassung --> KI
+</pre>
+
+    <p class="eyebrow" style="margin-top:26px">Die Bausteine im Einzelnen</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Baustein</th><th>Aufgabe</th></tr>
+        <tr><td class="mono">Portal-Web</td><td>Die Oberfläche, die alle drei Rollen benutzen &ndash; im Browser, am Handy und am Kiosk-PC.</td></tr>
+        <tr><td class="mono">Portal-API</td><td>Steuert Organisation, Rollen, Runden, Auswertung und Reports; einzige Verbindung zu allen anderen Systemen.</td></tr>
+        <tr><td class="mono">PostgreSQL</td><td>Speichert nur, <i>dass</i> jemand teilgenommen hat, nie <i>was</i> &ndash; plus Organisation, Rollen und Reports.</td></tr>
+        <tr><td class="mono">LimeSurvey</td><td>Spielt den Fragebogen aus, vergibt Einmal-Zugänge, sammelt die Antworten &ndash; unverändert im Kern.</td></tr>
+        <tr><td class="mono">MariaDB</td><td>Rohantworten von LimeSurvey; werden automatisch nach 90 Tagen gelöscht.</td></tr>
+        <tr><td class="mono">SAP / SuccessFactors</td><td>Liefert die Organisation &ndash; wer führt wen. Heute per CSV, Anbindung per OData vorbereitet.</td></tr>
+        <tr><td class="mono">Entra ID</td><td>Single Sign-on für die Anmeldung im Portal.</td></tr>
+        <tr><td class="mono">Mailserver</td><td>Versendet Einladungen und Erinnerungen &ndash; produktiv über den Firmen-Mailserver.</td></tr>
+        <tr><td class="mono">KI-Provider</td><td>Optional und austauschbar &ndash; fasst Freitexte zusammen und ordnet sie Themen zu.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="stand">
+    <p class="eyebrow">Reifegrad</p>
+    <h2>Stand &amp; nächste Schritte</h2>
+    <p class="lede">
+      Ein funktionsfähiger Prototyp mit allen oben beschriebenen Funktionen, mehrfach automatisiert getestet
+      und mit echten Testdaten durchgespielt &ndash; noch kein produktionsreifes System.
+    </p>
+    <div class="checklist">
+      <div>
+        <h3>Bereits geprüft</h3>
+        <ul>
+          <li class="done"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Alle Kernfunktionen automatisiert getestet</li>
+          <li class="done"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Echte Runde mit echten Teilnahmen durchgespielt</li>
+          <li class="done"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Anonymität direkt in der Datenbank kontrolliert</li>
+          <li class="done"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Lasttest: 300 gleichzeitige Teilnahmen ohne Fehler</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Noch zu tun</h3>
+        <ul>
+          <li class="next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Freigabe durch Betriebsrat &amp; Datenschutz</li>
+          <li class="next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Anbindung an echtes SAP, Entra ID und Mailserver</li>
+          <li class="next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Produktionsserver mit HTTPS und Backups</li>
+          <li class="next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg> KI-Provider gegen ein echtes internes Gateway testen</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Führungsfeedback-Portal &middot; interne Dokumentation &middot; alle Beispieldaten sind fiktiv.</footer>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#nav a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    function setActive() {
+      var y = window.scrollY + 140;
+      var current = sections[0];
+      sections.forEach(function (s) { if (s.offsetTop <= y) current = s; });
+      links.forEach(function (a) {
+        var on = a.getAttribute('href') === '#' + current.id;
+        a.classList.toggle('active', on);
+        if (on) a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      });
+    }
+    window.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+  })();
+</script>
