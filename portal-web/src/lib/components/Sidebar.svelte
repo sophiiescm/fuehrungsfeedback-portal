@@ -124,7 +124,7 @@
 		border-radius: 12px;
 		background: var(--accent);
 		font-size: 1.1rem;
-		box-shadow: 0 4px 12px rgba(80, 130, 88, 0.35);
+		box-shadow: 0 4px 12px rgba(0, 79, 35, 0.35);
 	}
 	.topbar {
 		padding-top: env(safe-area-inset-top);

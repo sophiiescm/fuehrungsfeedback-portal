@@ -338,7 +338,7 @@
 		color: var(--accent-contrast);
 		font-size: 2rem;
 		line-height: 1;
-		box-shadow: 0 8px 24px rgba(80, 130, 88, 0.45);
+		box-shadow: 0 8px 24px rgba(0, 79, 35, 0.45);
 	}
 	.fab span {
 		display: inline-block;

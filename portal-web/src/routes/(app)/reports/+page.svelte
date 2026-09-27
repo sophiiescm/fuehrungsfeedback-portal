@@ -93,7 +93,7 @@
 	// Ring: Wert 1..5 als Anteil
 	const R = 54;
 	const C = 2 * Math.PI * R;
-	const colors = ['#5a9a63', '#0891b2', '#16a34a', '#d97706', '#dc2626'];
+	const colors = ['#004f23', '#007298', '#16a34a', '#d97706', '#dc2626'];
 	const x = (i: number) => 40 + (trendRounds.length > 1 ? (i * 520) / (trendRounds.length - 1) : 260);
 	const y = (v: number) => 180 - ((v - 1) / 4) * 160;
 	const cloudSize = (c: number, max: number) => 0.85 + (c / max) * 1.6;

@@ -1,24 +1,26 @@
 /* Portal-Look (siehe portal-web/src/lib/styles/tokens.css): Farbverlauf,
    halbtransparente Karten, WCAG-AA-Kontrast (Text auf opakem Untergrund).
    Mobile-first: grosse Touch-Ziele (>= 48px), Antworten als Kacheln, Buttons in voller
-   Breite, iOS-Safe-Areas. Funktioniert auf Smartphone, iPad und Kiosk-PCs. */
+   Breite, iOS-Safe-Areas. Funktioniert auf Smartphone, iPad und Kiosk-PCs.
+   Markenfarben: Waldgruen #004F23, Petrol #007298 (siehe tokens.css). */
 
 :root {
-  --pf-accent: #78ab78;
-  --pf-accent-hover: #679a67;
-  --pf-accent-text: #2f6b3a;
-  --pf-on-accent: #10231a;
-  --pf-text: #17241b;
-  --pf-text-2: #43524a;
+  --pf-accent: #004f23;
+  --pf-accent-hover: #016b30;
+  --pf-accent-text: #004f23;
+  --pf-on-accent: #ffffff;
+  --pf-accent2: #007298;
+  --pf-text: #10231b;
+  --pf-text-2: #41564e;
   --pf-card: rgba(255, 255, 255, 0.92);
-  --pf-border: rgba(30, 35, 51, 0.14);
+  --pf-border: rgba(16, 35, 27, 0.16);
   --pf-tile: #ffffff;
 }
 
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  background: radial-gradient(circle at top left, #f1f7f1, #dfeee3 70%) fixed;
+  background: radial-gradient(circle at top left, #eef8f2, #e2eff3 70%) fixed;
   color: var(--pf-text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 17px;
@@ -34,16 +36,16 @@ body {
   background: var(--pf-card);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(31, 41, 55, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 40, 45, 0.12);
 }
 .question-container { padding: 1rem 1.1rem; margin-bottom: 0.9rem; }
 .question-text, .ls-label-question { font-size: 1.05rem; font-weight: 600; color: var(--pf-text); }
 .question-help-container, .ls-question-help { color: var(--pf-text-2); font-size: 0.9rem; }
-.group-title, .group-name, .group-title h1, .group-title h2, h1.group-title { font-size: 1.35rem !important; font-weight: 700; margin: 0.5rem 0; }
+.group-title, .group-name, .group-title h1, .group-title h2, h1.group-title { font-size: 1.35rem !important; font-weight: 700; margin: 0.5rem 0; color: var(--pf-accent-text); }
 
 /* Fortschrittsbalken gut sichtbar */
-.progress { height: 12px; border-radius: 999px; background: rgba(30, 35, 51, 0.12); }
-.progress-bar { background: var(--pf-accent); border-radius: 999px; }
+.progress { height: 12px; border-radius: 999px; background: rgba(16, 35, 27, 0.12); }
+.progress-bar { background: var(--pf-accent2); border-radius: 999px; }
 
 /* Antwortoptionen als grosse Kacheln: li = Kachel, Radio/Checkbox links IN der Kachel */
 .answers-list .answer-item, ul.radio-list > li, ul.checkbox-list > li {
@@ -72,10 +74,10 @@ body {
 .answers-list .answer-item > label:hover { border-color: var(--pf-accent); }
 .answers-list .answer-item > input:checked + label {
   border-color: var(--pf-accent);
-  background: rgba(120, 171, 120, 0.22);
+  background: rgba(0, 79, 35, 0.14);
   font-weight: 600;
 }
-.answers-list .answer-item > input:focus-visible + label { outline: 3px solid rgba(120, 171, 120, 0.6); }
+.answers-list .answer-item > input:focus-visible + label { outline: 3px solid rgba(0, 114, 152, 0.5); }
 
 /* Skalen (Likert/NPS als Array): auf schmalen Bildschirmen umbrechen statt scrollen */
 .array-5-pt-choice .answers-list, .array-10-pt-choice .answers-list {
@@ -91,10 +93,10 @@ textarea, input[type="text"], input[type="number"], select {
   padding: 0.6rem 0.8rem;
 }
 textarea { min-height: 120px; }
-textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !important; box-shadow: 0 0 0 3px rgba(120, 171, 120, 0.4) !important; outline: none; }
+textarea:focus, input:focus, select:focus { border-color: var(--pf-accent2) !important; box-shadow: 0 0 0 3px rgba(0, 114, 152, 0.3) !important; outline: none; }
 
 /* Navigation: volle Breite, gross */
-.btn-primary, button.btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-previous-btn, .ls-move-submit-btn {
+.btn-primary, button.btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-submit-btn {
   background: var(--pf-accent) !important;
   border-color: var(--pf-accent) !important;
   color: var(--pf-on-accent) !important;
@@ -107,7 +109,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--pf-accent) !impo
 .btn-primary:hover { background: var(--pf-accent-hover) !important; }
 .ls-move-previous-btn { background: #fff !important; color: var(--pf-accent-text) !important; border: 2px solid var(--pf-accent) !important; }
 #navigator-container, .navigator { padding-bottom: 1rem; }
-a { color: var(--pf-accent-text); }
+a { color: var(--pf-accent2); }
 
 /* Schmale Bildschirme (Handy) */
 @media (max-width: 767.98px) {
@@ -126,10 +128,12 @@ a { color: var(--pf-accent-text); }
 }
 
 @media (prefers-color-scheme: dark) {
-  :root { --pf-text: #eef5ef; --pf-text-2: #c3d1c7; --pf-card: rgba(26, 42, 32, 0.94); --pf-border: rgba(255,255,255,0.22); --pf-tile: #21362a; --pf-accent: #78ab78; --pf-accent-hover: #8fc08f; --pf-accent-text: #9fd0a0; }
-  body { background: radial-gradient(circle at top left, #0e1812, #182a1f 70%) fixed; color: var(--pf-text); }
-  .btn-primary, .ls-move-btn, .ls-move-next-btn, .ls-move-submit-btn { color: #10231a !important; }
-  textarea, input[type="text"], select { background: #21362a !important; color: var(--pf-text) !important; }
+  :root {
+    --pf-text: #eaf6f0; --pf-text-2: #bfd6cd; --pf-card: rgba(10, 33, 30, 0.94); --pf-border: rgba(255,255,255,0.22); --pf-tile: #123028;
+    --pf-accent: #22a75f; --pf-accent-hover: #30c471; --pf-accent-text: #4fdb8d; --pf-on-accent: #06170e; --pf-accent2: #22aedd;
+  }
+  body { background: radial-gradient(circle at top left, #061a13, #041d24 70%) fixed; color: var(--pf-text); }
+  textarea, input[type="text"], select { background: #123028 !important; color: var(--pf-text) !important; }
   .ls-move-previous-btn { background: transparent !important; }
-  a { color: #9fd0a0; }
+  a { color: var(--pf-accent2); }
 }

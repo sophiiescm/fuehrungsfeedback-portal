@@ -56,7 +56,7 @@ DEFAULT: dict = {
     "subtitle": "{leader} · {n} Antworten",
     "intro": "",
     "footer": "Vertraulich – nur für die bewertete Führungskraft bestimmt.",
-    "accent": "#78ab78",
+    "accent": "#004f23",
     "texts": {},
     "columns": {"fachbereich": True, "unternehmen": True, "vorrunde": True, "median": True, "stddev": False, "minmax": False},
     "sections": [{"key": k, "enabled": v[2], "title": v[0]} for k, v in SECTIONS.items()],
